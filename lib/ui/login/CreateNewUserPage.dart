@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:pd_app/api/UploadService.dart';
 import 'package:pd_app/ui/login/LoginPage.dart';
+import 'dart:convert';
 
 
 class CreateNewUserPage extends StatefulWidget {
@@ -452,9 +453,7 @@ class _CreateNewUserPageState extends State<CreateNewUserPage> {
                         // UploadService.createNewPatient(patientNameController.text, gender, ageInput.text);
                         //print(patientNameController.text + ', ' + gender.toString() + ', ' + ageInput.text + ', ' + dateInput.text + ', ' + emailInput.text);
                         //UploadService.createNewPatient(patientNameController.text, gender, ageInput.text, dateInput.text, emailInput.text);
-                        createNewPatient();
-                        createNewUser();
-                        Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => const LoginPage(title: "NTU PD")));
+                        createNewUser(context);
                         //Navigator.popUntil(context, ModalRoute.withName('/'));
                         //Navigator.popUntil(context, ModalRoute.withName('/'));
                       },
@@ -509,16 +508,49 @@ class _CreateNewUserPageState extends State<CreateNewUserPage> {
       return response;
     }
 
-  Future<void> createNewUser() async {
-    var response;
-    try{
-      response = await UploadService.createNewUser(usernameInput.text, userpasswordInput.text, emailInput.text);
 
-    }catch(error){
-      print('uploadError:' + error.toString());
+    Future<void> createNewUser(BuildContext context) async {
+      var response;
+      try {
+        response = await UploadService.createNewUser(
+            usernameInput.text, userpasswordInput.text, emailInput.text);
+
+
+        var responseData = await response.stream.toBytes();
+        final responseBody = json.decode(utf8.decode(responseData));
+
+        if (response.statusCode == 200) {
+          createNewPatient();
+          Navigator.of(context).pushReplacement(MaterialPageRoute(
+              builder: (context) => const LoginPage(title: "NTU PD")));
+          } else {
+
+          if (responseBody.containsKey('errors')) {
+            final errorMessages = responseBody['errors'];
+            // Show an error dialog with error messages
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: Text('錯誤！'),
+                  content: Text(errorMessages),
+                  actions: <Widget>[
+                    TextButton(
+                      child: Text('了解'),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                    ),
+                  ],
+                );
+              },
+            );
+          }
+        }
+      } catch (error) {
+        print('uploadError:' + error.toString());
+      }
+
     }
-
-    return response;
-  }
 
 }
