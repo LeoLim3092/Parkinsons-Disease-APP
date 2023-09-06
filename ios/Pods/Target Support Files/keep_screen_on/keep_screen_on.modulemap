@@ -1,0 +1,6 @@
+framework module keep_screen_on {
+  umbrella header "keep_screen_on-umbrella.h"
+
+  export *
+  module * { export * }
+}
