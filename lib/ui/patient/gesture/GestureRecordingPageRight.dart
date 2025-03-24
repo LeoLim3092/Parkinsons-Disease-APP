@@ -212,17 +212,23 @@ class _GestureRecordingPageRightState extends State<GestureRecordingPageRight> w
   }
 
   Icon getIconByAccelerometerValues() {
-    var y = _accelerometerValues[1];
-    var z = _accelerometerValues[2];
-    var eps = 1 / 10.0;
-    if ((y - 9.8).abs() < eps) {
-      return Icon(Icons.check, color: Color(0xFFFFFFFF), size: 60.0);
-    } else if (z > 0) {
-      return Icon(Icons.arrow_drop_up, color: Color(0xFFFFFFFF), size: 60.0);
-    } else {
-      return Icon(Icons.arrow_drop_down, color: Color(0xFFFFFFFF), size: 60.0);
+    if (_accelerometerValues.length >=3) {
+        var y = _accelerometerValues[1];
+        var z = _accelerometerValues[2];
+        var eps = 1 / 10.0;
+        if ((y - 9.8).abs() < eps) {
+          return Icon(Icons.check, color: Color(0xFFFFFFFF), size: 60.0);
+        } else if (z > 0) {
+          return Icon(Icons.arrow_drop_up, color: Color(0xFFFFFFFF), size: 60.0);
+        } else {
+          return Icon(Icons.arrow_drop_down, color: Color(0xFFFFFFFF), size: 60.0);
+        }
+    }
+    else{
+        return Icon(Icons.error, color: Colors.red, size: 60.0);
     }
   }
+
 
   /// Display the preview from the camera (or a message if the preview is not available).
   Widget _cameraPreviewWidget() {

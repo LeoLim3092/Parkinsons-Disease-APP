@@ -5,7 +5,7 @@ import 'package:pd_app/api/PatientService.dart';
 import 'package:pd_app/model/Patient.dart';
 import 'package:pd_app/prefs/SessionPrefs.dart';
 import 'package:pd_app/ui/login/CreateNewUserPage.dart';
-// import 'package:pd_app/ui/login/MedicalStaffLoginPage.Dart';
+import 'package:pd_app/ui/patient/list/MedicalStaffLoginPage.Dart';
 import 'package:pd_app/ui/patient/action/PatientActionPage.dart';
 
 
@@ -162,29 +162,29 @@ class _LoginPageState extends State<LoginPage> {
             //                     .textTheme
             //                     .titleLarge,
             //               )))),
-              // Container(
-              //     margin:
-              //     const EdgeInsets.only(left: 100.0, right: 100.0, top: 20.0),
-              //     padding: const EdgeInsets.only(top: 20.0, bottom: 20.0),
-              //     width: double.infinity,
-              //     child: ElevatedButton(
-              //         onPressed: () {
-              //           gotoMedicalStaffLogin();
-              //         },
-              //         style: ButtonStyle(
-              //           backgroundColor: MaterialStateProperty.all<Color>(Colors.blue), // Set the background color
-              //           // You can customize other button properties here
-              //         ),
-              //         child: Container(
-              //             padding:
-              //             const EdgeInsets.only(top: 10.0, bottom: 10.0),
-              //             child: Text(
-              //               '醫療人員登入',
-              //               style: Theme
-              //                   .of(context)
-              //                   .textTheme
-              //                   .headline6,
-              //             )))),
+              Container(
+                  margin:
+                  const EdgeInsets.only(left: 100.0, right: 100.0, top: 20.0),
+                  padding: const EdgeInsets.only(top: 20.0, bottom: 20.0),
+                  width: double.infinity,
+                  child: ElevatedButton(
+                      onPressed: () {
+                        gotoMedicalStaffLogin();
+                      },
+                      style: ButtonStyle(
+                        backgroundColor: MaterialStateProperty.all<Color>(Colors.blue), // Set the background color
+                        // You can customize other button properties here
+                      ),
+                      child: Container(
+                          padding:
+                          const EdgeInsets.only(top: 10.0, bottom: 10.0),
+                          child: Text(
+                            '醫療人員登入',
+                            style: Theme
+                                .of(context)
+                                .textTheme
+                                .headlineSmall,
+                          )))),
             ],
           ),
         ),
@@ -220,9 +220,9 @@ class _LoginPageState extends State<LoginPage> {
     Navigator.of(context).push(MaterialPageRoute(builder: (context) => CreateNewUserPage()));
   }
 
-  // void gotoMedicalStaffLogin() {
-  //   Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => MedicalStaffLoginPage(title: 'NTUH Staff Login')));
-  // }
+  void gotoMedicalStaffLogin() {
+    Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => MedicalStaffLoginPage(title: 'NTUH Staff Login')));
+  }
 
   void gotoUserPage(Patient patient) {
     Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => PatientActionPage(patient: patient)));

@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:convert';
 import 'package:pd_app/Constants.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
@@ -70,7 +71,17 @@ class UploadService {
     return request.send();
   }
 
-  static Future<http.StreamedResponse> uploadPaint(String pid, File value, String type) async {
+  static Future<http.StreamedResponse> uploadExerciseRecord(String pid, String exercise) async {
+    var url = Uri.http(Constants.BASE_HOST, "api/upload_exercise_record");
+    var request = http.MultipartRequest("POST", url);
+    var session = await SessionPrefs.getSession();
+    request.headers['Authorization'] = "Bearer ${session!.access}";
+    request.fields['pid'] = pid;
+    request.fields['exercise'] = exercise;
+    return request.send();
+  }
+
+  static Future<http.StreamedResponse> uploadPaint(String pid, File value, String type, List<List<Map<String, double>>> coordinates) async {
     var url = Uri.http(Constants.BASE_HOST, "api/upload_paint");
     var request = http.MultipartRequest("POST", url);
     var session = await SessionPrefs.getSession();
@@ -82,6 +93,8 @@ class UploadService {
         value.path,
         contentType: MediaType("image", "png")
     ));
+    request.fields['coordinates'] = jsonEncode(coordinates); // Add coordinates to the request
+
     return request.send();
   }
 

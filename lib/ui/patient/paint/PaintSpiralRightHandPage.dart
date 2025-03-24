@@ -157,10 +157,20 @@ class _PaintSpiralRightHandPageState extends State<PaintSpiralRightHandPage> {
                     file.writeAsBytesSync(_savedImage);
 
                     // await UploadService.uploadPaint(widget.patient.name ?? "", File.fromRawPath(_savedImage), "circle");
+
+                    List<List<Map<String, double>>> coordinatesJson = _controller.getCoordinatesList()
+                        .map((path) => path
+                            .map((offset) => {'x': offset.dx, 'y': offset.dy})
+                            .toList())
+                        .toList();
+
+                    // Upload image and coordinates
                     await UploadService.uploadPaint(
-                        widget.patient.patientId ?? "",
-                        file,
-                        "spiral_right");
+                      widget.patient.patientId ?? "",
+                      file,
+                      "spiral_left",
+                      coordinatesJson,
+                    );
                     EasyLoading.dismiss();
                     Navigator.of(context).pop(true);
                     Navigator.of(context).pushReplacement(MaterialPageRoute(builder:
@@ -176,6 +186,7 @@ class _PaintSpiralRightHandPageState extends State<PaintSpiralRightHandPage> {
 class HandwrittenSignatureController {
   Function? _reset;
   Future<Uint8List?> Function()? _saveImage;
+  List<List<Offset>> Function()? _getCoordinatesList;
 
   void reset() {
     _reset?.call();
@@ -183,6 +194,10 @@ class HandwrittenSignatureController {
 
   Future<Uint8List?> saveImage() {
     return _saveImage?.call() ?? Future.value(null);
+  }
+
+  List<List<Offset>> getCoordinatesList() {
+    return _getCoordinatesList?.call() ?? [];
   }
 }
 
@@ -199,19 +214,22 @@ class HandwrittenSignatureWidget extends StatefulWidget {
 class _HandwrittenSignatureWidgetState
     extends State<HandwrittenSignatureWidget> {
   Path? _path;
-
   Offset? _previousOffset;
-
   final List<Path?> _pathList = [];
+  final List<List<Offset>> _coordinatesList = [];
+
   @override
   void initState() {
     super.initState();
     widget.controller?._reset = () {
       setState(() {
         _pathList.clear();
+        _coordinatesList.clear();
       });
     };
     widget.controller?._saveImage = () => _generateImage();
+    widget.controller?._getCoordinatesList = () => _coordinatesList;
+  
   }
 
   Future<Uint8List?> _generateImage() async {
@@ -298,6 +316,7 @@ class _HandwrittenSignatureWidgetState
         setState(() {
           _path = Path()..moveTo(position.dx, position.dy);
           _previousOffset = position;
+          _coordinatesList.add([position]);
         });
       },
       onPanUpdate: (details) {
@@ -320,6 +339,8 @@ class _HandwrittenSignatureWidgetState
             );
           }
           _previousOffset = position;
+          _coordinatesList.last.add(position);
+
         });
       },
       onPanEnd: (details) {

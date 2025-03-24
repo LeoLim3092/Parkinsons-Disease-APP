@@ -5,8 +5,9 @@ import 'package:pd_app/model/Patient.dart';
 import 'package:pd_app/ui/patient/gesture/GestureRecordingPageLeft.dart';
 import 'package:pd_app/ui/patient/gesture/GestureRecordingPageRight.dart';
 import 'package:pd_app/ui/patient/sound_recording/SoundRecordingPage.dart';
+import 'package:pd_app/ui/patient/sound_recording/SoundRecordingFreeTalkPage.dart';
 import 'package:pd_app/ui/patient/walk/WalkRecordingPage.dart';
-import 'package:pd_app/ui/patient/action/ResultPage.dart';
+import 'package:pd_app/ui/patient/action/newResultPage.dart';
 import 'package:pd_app/api/UploadService.dart';
 import 'package:pd_app/api/PredictService.dart';
 import 'package:pd_app/ui/patient/info/HelpPages.dart';
@@ -37,6 +38,7 @@ class _PatientActionPageState extends State<PatientActionPage> with RouteAware, 
   final _formKey = GlobalKey<FormState>();
   var medicine = "0";
   var medicine_3hr = "0";
+  var exercise = "0";
   bool isPredict = true;
 
 
@@ -69,53 +71,126 @@ class _PatientActionPageState extends State<PatientActionPage> with RouteAware, 
   @override
   Widget build(BuildContext context) {
   return Scaffold(
-    appBar: AppBar(title: Text("${widget.patient.name ?? ""} 的紀錄介面",
-      style: Theme.of(context).textTheme.titleLarge)),
+    appBar: AppBar(
+      centerTitle: true,
+      title: Text(
+              "${widget.patient.name ?? ""} 的紀錄介面",
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white),
+             ),
+      flexibleSpace: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Colors.blue, Colors.green],  // Adjust colors as needed
+          ),
+        ),
+      ),
+      backgroundColor: Colors.transparent, // Set this to transparent to see the gradient
+    ),
+
     body: Stack(
       children: [
-        Container(
-          decoration: const BoxDecoration(
-            image: DecorationImage(
-              image: AssetImage("assets/images/wallpaper.png"), // Replace with the path to your wallpaper image
-              fit: BoxFit.cover,
-            ),
-          ),
-          child: ListView(
-            key: _formKey,
-            children: getContent(),
-          ),
-        ),
+         Container(
+           decoration: const BoxDecoration(
+             image: DecorationImage(
+               image: AssetImage("assets/images/APP001.jpg"),
+               fit: BoxFit.cover,
+             ),
+           ),
+           child: ListView(
+             key: _formKey,
+             children: [
+               ...getContent(), // This will spread out the widgets from getContent() in the list
+               Padding(
+                 padding: const EdgeInsets.only(top: 10, bottom: 10), // adding 5 px space at top and bottom
+                 child: Center(
+                   child: GestureDetector(
+                     onTap: () => gotoResultPage(widget.patient),
+                     child: Container(
+                       width: 250,
+                       child: Image.asset(
+                         "assets/images/APP005.png",
+                         fit: BoxFit.contain,
+                       ),
+                     ),
+                   ),
+                 ),
+               ),
+             ],
+           ),
+         ),
 
-        Positioned(
-          bottom: 5.0,
-          left: 5.0,
-          child: ElevatedButton(
-            onPressed: () {
-              // Add your onTap function here
-              gotoHelpPage();
-            },
-            child: Text("使用教學", style: Theme.of(context).textTheme.headlineMedium)
+//         Positioned(
+//           bottom: 5.0,
+//           left: 5.0,
+//           child: GestureDetector(
+//             onTap: () => gotoHelpPage(),
+//             child: Image.asset(
+//               "assets/images/APP003.png",
+//               width: 200,
+//               fit: BoxFit.fill,
+//             )
+//           ),
+//         ),
+//
+//         Positioned(
+//           bottom: 5.0,
+//           right: 5.0,
+//           child: GestureDetector(
+//             onTap: () => Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => const LoginPage(title: "NTU PD"))),
+//             child: Image.asset(
+//               "assets/images/APP004.png",  // replace with your image path
+//               width: 65,  // adjust the width as needed
+//               fit: BoxFit.fill,
+//             )
+//           ),
+//         )
 
-        ),
-        ),
-
-        Positioned(
-            bottom: 5.0,
-            right: 5.0,
-            child: ElevatedButton(
-                onPressed: () {
-                  Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => const LoginPage(title: "NTU PD")));
-                },
-                child: Container(
-                    padding: const EdgeInsets.only(top: 10.0, bottom: 10.0),
-                    child: Text(
-                      "登出",
-                      style: Theme.of(context).textTheme.headlineMedium,
-                    )))
-        ),
       ],
-    ),);
+    ),
 
+   bottomNavigationBar: BottomAppBar(
+
+     child: Container(
+
+       height: 60,  // Adjust height as needed
+       color: Color(0xFF9AC6C7),  // Change to your desired fixed color
+       child: Row(
+         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+         children: <Widget>[
+           // Padding for left image
+           Padding(
+             padding: EdgeInsets.only(left: 5.0), // Added space to the left
+             child: GestureDetector(
+               onTap: () => gotoHelpPage(),
+               child: Image.asset(
+                 "assets/images/APP003.png",
+                 width: 150,
+                 fit: BoxFit.fill,
+               )
+             ),
+           ),
+           // Padding for right image
+           Padding(
+             padding: EdgeInsets.only(right: 5.0), // Added space to the right
+             child: GestureDetector(
+               onTap: () => Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => const LoginPage(title: "NTU PD"))),
+               child: Image.asset(
+                 "assets/images/APP004.png",
+                 width: 65,
+                 fit: BoxFit.fill,
+               )
+             ),
+           ),
+         ],
+       ),
+     ),
+   ),
+
+
+
+    );
   }
 
 
@@ -124,84 +199,45 @@ class _PatientActionPageState extends State<PatientActionPage> with RouteAware, 
 
       getActionButton(() {
         gotoGesturePageLeft(widget.patient);
-      }, "assets/images/handL.png", "步驟一：左手手勢錄影"),
+      }, "assets/images/APP017.png"),
       getActionButton(() {
         gotoGesturePageRight(widget.patient);
-      }, "assets/images/handR.png", "步驟二：右手手勢錄影"),
+      }, "assets/images/APP018.png"),
       getActionButton(() {
         gotoSoundRecordingPage(widget.patient);
-      }, "assets/images/voice.png", "步驟三：閱讀聲音錄製"),
+      }, "assets/images/APP019.png"),
+      getActionButton(() {
+        gotoSoundRecordingFreeTalkPage(widget.patient);
+      }, "assets/images/APP028.png"),
       getActionButton(() {
         gotoWalkPage(widget.patient);
-      }, "assets/images/walk.png", "步驟四：行走步態錄影"),
+      }, "assets/images/APP020.png"),
+        getActionButton(() {
+          gotoPredictPage(widget.patient);
+        }, "assets/images/APP021.png"),
 
-      Container(
-
-        margin:const EdgeInsets.only(left: 10.0, right: 10.0, top: 10.0),
-        width: double.infinity,
-        color: Colors.blue.withAlpha(128),
-        // borderRadius: BorderRadius.circular(10.0),
-        child: ListTile(
-          onTap: () {gotoPredictPage(widget.patient);
-
-            },
-          leading: Image.asset(
-            'assets/images/predict.png',
-            width: 100.0,
-            height: 100.0,
-          ),
-          title: Text(
-            "最後一步：預測結果",
-            style: Theme.of(context).textTheme.headlineSmall,
-          ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 5.0), // Adjust the padding as needed
-          enabled: isPredict,
-        ),
-      ),
-
-       Container(
-        margin:
-        const EdgeInsets.only(left: 50.0, right: 50.0, top: 10.0),
-        width: double.infinity,
-        child: ElevatedButton(
-            onPressed: () {
-              gotoResultPage(widget.patient);
-            },
-            child: Container(
-                padding:
-                const EdgeInsets.only(top: 5.0, bottom: 10.0),
-                child: Text(
-                  '最近一次結果',
-                  style: Theme
-                      .of(context)
-                      .textTheme
-                      .headlineSmall,
-                )))
-        ),
     ];
   }
 
-  Widget getActionButton(VoidCallback click, String imgPath, String text) {
-  return Container(
-    margin:const EdgeInsets.only(left: 10.0, right: 10.0, top: 10.0),
-    width: double.infinity,
-    color: Colors.blue.withAlpha(128),
-    // borderRadius: BorderRadius.circular(10.0),
-    child: ListTile(
-      onTap: click,
-      leading: Image.asset(
-        imgPath,
-        width: 100.0,
-        height: 100.0,
+Widget getActionButton(VoidCallback click, String imgPath) {
+  return GestureDetector(
+    onTap: click,
+    child: Container(
+      margin: const EdgeInsets.only(left: 10.0, right: 10.0, top: 10.0),
+      width: double.infinity,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 1.0),
+        child: Image.asset(
+          imgPath,
+          width: MediaQuery.of(context).size.width - 32.0 - 20.0, // Screen width minus horizontal paddings and margins
+          fit: BoxFit.contain,
+        ),
       ),
-      title: Text(
-        text,
-        style: Theme.of(context).textTheme.headlineSmall,
-      ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 1.0), // Adjust the padding as needed
     ),
   );
-  }
+}
+
+
   void gotoHelpPage(){
     Navigator.of(context).push(MaterialPageRoute(builder: (context) => const HelpPages()));
   }
@@ -209,8 +245,12 @@ class _PatientActionPageState extends State<PatientActionPage> with RouteAware, 
     Navigator.of(context).push(MaterialPageRoute(builder: (context) => SoundRecordingPage(patient: patient)));
   }
 
+  void gotoSoundRecordingFreeTalkPage(Patient patient) {
+    Navigator.of(context).push(MaterialPageRoute(builder: (context) => SoundRecordingFreeTalkPage(patient: patient)));
+  }
+
   void gotoResultPage(Patient patient){
-    Navigator.of(context).push(MaterialPageRoute(builder: (context) => ResultPage(patient: patient)));
+    Navigator.of(context).push(MaterialPageRoute(builder: (context) => newResultPage(patient: patient)));
   }
 
   void gotoPredictPage(Patient patient) {
@@ -259,10 +299,18 @@ class _PatientActionPageState extends State<PatientActionPage> with RouteAware, 
         context: context,
         barrierDismissible: false,
         builder: (context) {
-          return AlertDialog(title: Text("諮詢", style: Theme.of(context).textTheme.headlineMedium),
+          return AlertDialog(title: Align(
+                    alignment: Alignment.centerLeft,  // Aligns to the left
+                    child: UnconstrainedBox(
+                      child: Container(
+                        width: 150,  // set your desired width
+                        child: Image.asset("assets/images/APP022.png", fit: BoxFit.cover),
+                      ),
+                    ),
+                  ),
               content: Text("請問您過去有被診斷為巴金森氏症嗎？", style: Theme.of(context).textTheme.headlineMedium), actions: <Widget>[
             TextButton(
-              child: Text("否", style: Theme.of(context).textTheme.headlineMedium),
+              child: Image.asset("assets/images/APP023.png", width: 70),
               onPressed: () {
                 var medicine = "0";
                 var medicine_3hr = "0";
@@ -271,7 +319,7 @@ class _PatientActionPageState extends State<PatientActionPage> with RouteAware, 
               },
             ),
             TextButton(
-              child: Text("是", style: Theme.of(context).textTheme.headlineMedium),
+              child: Image.asset("assets/images/APP024.png", width: 70),
               onPressed: () {
                 Navigator.of(context).pop();
                 var medicine = "1";
@@ -288,27 +336,73 @@ class _PatientActionPageState extends State<PatientActionPage> with RouteAware, 
         context: context,
         barrierDismissible: false,
         builder: (context) {
-          return AlertDialog(title: Text("諮詢", style: Theme.of(context).textTheme.headlineMedium),
+          return AlertDialog(title: Align(
+                   alignment: Alignment.centerLeft,  // Aligns to the left
+                   child: UnconstrainedBox(
+                     child: Container(
+                       width: 150,  // set your desired width
+                       child: Image.asset("assets/images/APP022.png", fit: BoxFit.cover),
+                     ),
+                   ),
+                 ),
               content: Text("請問您在3小時內有服用巴金森藥物嗎?", style: Theme.of(context).textTheme.headlineMedium), actions: <Widget>[
             TextButton(
-              child: Text("否", style: Theme.of(context).textTheme.headlineMedium),
+              child: Image.asset("assets/images/APP023.png", width: 70),
               onPressed: () {
                 var medicine_3hr = "0";
                 UploadService.uploadMedicineRecord(widget.patient.patientId ?? "", medicine, medicine_3hr);
                 Navigator.of(context).pop();
+                showExercisesQuestion();
               },
             ),
             TextButton(
-              child: Text("是", style: Theme.of(context).textTheme.headlineMedium),
+              child: Image.asset("assets/images/APP024.png", width: 70),
               onPressed: () {
                 var medicine_3hr = "1";
                 UploadService.uploadMedicineRecord(widget.patient.patientId ?? "", medicine, medicine_3hr);
                 Navigator.of(context).pop();
+                showExercisesQuestion();
               },
             ),
           ]);
         });
 
+  }
+
+
+  void showExercisesQuestion() {
+    showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) {
+          return AlertDialog(title: Align(
+                   alignment: Alignment.centerLeft,  // Aligns to the left
+                   child: UnconstrainedBox(
+                     child: Container(
+                       width: 150,  // set your desired width
+                       child: Image.asset("assets/images/APP022.png", fit: BoxFit.cover),
+                     ),
+                   ),
+                 ),
+              content: Text("請問您這一天有進行我們APP提供的動作運動嗎?", style: Theme.of(context).textTheme.headlineMedium), actions: <Widget>[
+            TextButton(
+              child: Image.asset("assets/images/APP023.png", width: 70),
+              onPressed: () {
+                var exercise = "0";
+                UploadService.uploadExerciseRecord(widget.patient.patientId ?? "", exercise);
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: Image.asset("assets/images/APP024.png", width: 70),
+              onPressed: () {
+                var exercise = "1";
+                UploadService.uploadExerciseRecord(widget.patient.patientId ?? "", exercise);
+                Navigator.of(context).pop();
+              },
+            ),
+          ]);
+        });
   }
 
   void showAgeWarningDialog(){
@@ -333,7 +427,7 @@ class _PatientActionPageState extends State<PatientActionPage> with RouteAware, 
   void showPredictDialog(Patient patient) {
     final uploadStatus = Provider.of<UploadStatus>(context, listen: false);
     String noUploadFile = '';
-    bool isUploadSuccessful = false;
+    bool isUploadSuccessful = true;
     bool isUploadSoundSuccessful = uploadStatus.isUploadSoundSuccessful;
     bool isUploadGaitSuccessful = uploadStatus.isUploadGaitSuccessful;
     bool isUploadLHSuccessful = uploadStatus.isUploadLHSuccessful;
@@ -363,19 +457,33 @@ class _PatientActionPageState extends State<PatientActionPage> with RouteAware, 
           context: context,
           barrierDismissible: true,
           builder: (context) {
-            return AlertDialog(title: const Text("諮詢", style:
-            TextStyle(fontSize: 28)), content: const Text("是否要進行模型預測", style:
-            TextStyle(fontSize: 28)), actions: <Widget>[
+            return AlertDialog(title:  Align(
+                 alignment: Alignment.centerLeft,  // Aligns to the left
+                 child: UnconstrainedBox(
+                   child: Container(
+                     width: 150,  // set your desired width
+                     child: Image.asset("assets/images/APP022.png", fit: BoxFit.cover),
+                   ),
+                 ),
+               ),
+            
+            content: const Text("是否要進行模型預測", style:
+            TextStyle(fontSize: 28)),
+
+            actions: <Widget>[
               TextButton(
-                child: Text("否", style: Theme.of(context).textTheme.headlineMedium),
+                child: Image.asset("assets/images/APP023.png", width: 70),
                 onPressed: () {
                   Navigator.of(context).pop();
                 },
               ),
               TextButton(
-                child: Text("是", style: Theme.of(context).textTheme.headlineMedium),
+                child: Image.asset("assets/images/APP024.png", width: 70),
                 onPressed: () {
                   performPredictions(patient, context);
+                  Navigator.of(context).pop();
+                  gotoHandWritingHelp(widget.patient);
+                  // showLoadingAnimation(patient, context);
                 },
               ),
             ]);
@@ -400,9 +508,17 @@ class _PatientActionPageState extends State<PatientActionPage> with RouteAware, 
     }
   }
 
+
+  Future<void> showLoadingAnimation(Patient patient, BuildContext context) async {
+    EasyLoading.show(status: '模型分析中，請耐心等待！');
+    await Future.delayed(Duration(seconds: 30));
+    EasyLoading.dismiss();
+    gotoResultPage(patient);
+
+  }
+
   Future<void> performPredictions(Patient patient, BuildContext context) async {
     PredictService.predictModels(patient.patientId ?? "");
-    gotoHandWritingHelp(widget.patient);
   }
 
   // Future<void> performPredictions(Patient patient, BuildContext context) async {
@@ -449,6 +565,14 @@ class _PatientActionPageState extends State<PatientActionPage> with RouteAware, 
   // }
 
 }
+
+Color blendWithWhite(Color color, double alpha) {
+  int red = ((1 - alpha) * 255 + alpha * color.red).round();
+  int green = ((1 - alpha) * 255 + alpha * color.green).round();
+  int blue = ((1 - alpha) * 255 + alpha * color.blue).round();
+  return Color.fromARGB(255, red, green, blue);
+}
+
 
 class CustomImageButton extends StatelessWidget {
   final VoidCallback onPressed;

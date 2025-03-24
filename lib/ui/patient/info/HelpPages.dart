@@ -22,17 +22,30 @@ class _HelpPagesState extends State<HelpPages> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("使用教學示範",
-          style: Theme
-              .of(context)
-              .textTheme
-              .titleLarge)),
+     appBar: AppBar(
+          centerTitle: true,
+          title: Text(
+                  "使用教學示範",
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white),
+                 ),
+          flexibleSpace: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Colors.blue, Colors.green],  // Adjust colors as needed
+              ),
+            ),
+          ),
+          backgroundColor: Colors.transparent, // Set this to transparent to see the gradient
+        ),
+
       body: Stack(
         children: [
           Container(
             decoration: const BoxDecoration(
               image: DecorationImage(
-                image: AssetImage("assets/images/wallpaper.png"), // Replace with the path to your wallpaper image
+                image: AssetImage("assets/images/APP001.jpg"), // Replace with the path to your wallpaper image
                 fit: BoxFit.cover,
               ),
             ),
@@ -49,21 +62,25 @@ class _HelpPagesState extends State<HelpPages> {
     return [
       getActionButton(() {
         gotoHelpGesturePage();
-      }, "assets/images/handL.png", "手勢錄影教學"),
+      }, "assets/images/APP006.png", "手勢錄影教學"),
       getActionButton(() {
         gotoHelpSoundRecordingPage();
-      }, "assets/images/voice.png", "聲音錄製教學"),
+      }, "assets/images/APP011.png", "聲音錄製教學"),
       getActionButton(() {
         gotoHelpGaitPage();
-      }, "assets/images/walk.png", "步態錄影教學"),
+      }, "assets/images/APP013.png", "步態錄影教學"),
     ];
   }
 
   Widget getActionButton(VoidCallback click, String imgPath, String text) {
     return Container(
+        decoration: BoxDecoration(
+            color: Color(0xFFAFAFA0).withOpacity(0.2),
+            borderRadius: BorderRadius.circular(15.0),
+          ),
       margin:const EdgeInsets.only(left: 10.0, right: 10.0, top: 10.0),
-      width: double.infinity,
-      color: Colors.greenAccent.withAlpha(128),
+      width: double.infinity + 40,
+
       // borderRadius: BorderRadius.circular(10.0),
       child: ListTile(
         onTap: click,
@@ -74,7 +91,7 @@ class _HelpPagesState extends State<HelpPages> {
         ),
         title: Text(
           text,
-          style: Theme.of(context).textTheme.headlineLarge,
+          style: TextStyle(fontSize: 32.0),
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 1.0), // Adjust the padding as needed
       ),

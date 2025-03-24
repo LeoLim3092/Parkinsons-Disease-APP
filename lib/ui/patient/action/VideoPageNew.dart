@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pd_app/model/Patient.dart';
 import 'package:video_player/video_player.dart';
 import 'package:chewie/chewie.dart';
-import 'package:pd_app/ui/patient/action/ResultPage.dart';
+import 'package:pd_app/ui/patient/action/newResultPage.dart';
 
 
 class VideoPage extends StatefulWidget {
@@ -61,7 +61,7 @@ class _VideoPageState extends State<VideoPage> {
         }
         // Here, navigate to your ResultPage
         Navigator.of(context).pushReplacement(MaterialPageRoute(builder:
-            (context) => ResultPage(patient: widget.patient)),
+            (context) => newResultPage(patient: widget.patient)),
         );
       }
     });
@@ -125,7 +125,7 @@ class _VideoPageState extends State<VideoPage> {
       additionalOptions: (context) {
         return <OptionItem>[
           OptionItem(
-            onTap: toggleVideo,
+            onTap: (context) {toggleVideo();},
             iconData: Icons.live_tv_sharp,
             title: 'Toggle Video Src',
           ),
@@ -209,7 +209,7 @@ class _VideoPageState extends State<VideoPage> {
                             children: [
                               Text(
                                 '全螢幕',
-                                style: Theme.of(context).textTheme.headline6,
+                                style: Theme.of(context).textTheme.titleLarge,
                               ),
                               // Text(
                               //   title,

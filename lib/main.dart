@@ -22,6 +22,7 @@ var dio = Dio(BaseOptions(
 void main() async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+
   try {
     var session = await LoginService.refresh();
     SessionPrefs.save(session);
@@ -30,6 +31,21 @@ void main() async {
     runApp(MyApp(shouldLogin: true));
   }
   FlutterNativeSplash.remove();
+  EasyLoading.instance
+      ..displayDuration = const Duration(milliseconds: 2000)
+      ..indicatorType = EasyLoadingIndicatorType.fadingCircle
+      ..loadingStyle = EasyLoadingStyle.custom
+      ..indicatorSize = 45.0
+      ..radius = 10.0
+      ..fontSize = 26.0
+      ..progressColor = Colors.white
+      ..backgroundColor = Color(0xFF9AC6C7)
+      ..indicatorColor = Color(0xFF6BABE3)
+      ..textColor = Color(0xFFF7FAFA)
+      ..maskColor = Colors.blue.withOpacity(0.5)
+      ..userInteractions = false  // Prevents taps from dismissing the overlay
+      ..dismissOnTap = false;    // Ensures that a tap won't dismiss it
+
 }
 
 class MyApp extends StatelessWidget {
@@ -48,7 +64,7 @@ class MyApp extends StatelessWidget {
 
     return MultiBlocProvider(
       providers: [
-        // BlocProvider<PatientListCubit>(create: (context) => PatientListCubit()),
+        BlocProvider<PatientListCubit>(create: (context) => PatientListCubit()),
         BlocProvider<WalkRecordingCubit>(create: (context) => WalkRecordingCubit()),
       ],
       child: ChangeNotifierProvider<UploadStatus>(

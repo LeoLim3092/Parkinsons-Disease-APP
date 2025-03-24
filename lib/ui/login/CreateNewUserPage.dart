@@ -73,19 +73,34 @@ class _CreateNewUserPageState extends State<CreateNewUserPage> {
       return "第一個字號必須為 A-Z.";
     }
 
-    int genderCode = int.parse(idNumText.substring(1, 2));
+    int? genderCode = int.tryParse(idNumText.substring(1, 2));
     if (genderCode != 1 && genderCode != 2) {
       return "第二個字必須為 1 或 2" ;
     }
 
     int totalSum = 0;
     totalSum += (cityMap[firstChar]! ~/ 10) + (cityMap[firstChar]! % 10) * 9;
-    totalSum += genderCode * 8;
-    for (int i = 2; i <= 8; i++) {
-      int digit = int.parse(idNumText.substring(i, i + 1));
-      totalSum += digit * (9 - i);
+
+    if (genderCode != null){
+        totalSum += genderCode * 8;
     }
-    totalSum += int.parse(idNumText.substring(9, 10));
+
+    for (int i = 2; i <= 8; i++) {
+
+      int? digit = int.tryParse(idNumText.substring(i, i + 1));
+      if (digit != null){
+        totalSum += digit * (9 - i);
+      }
+      else{
+      return "后9码只能输入数字";
+      }
+    }
+    if (int.tryParse(idNumText.substring(9, 10)) != null){
+        totalSum += int.parse(idNumText.substring(9, 10));
+    }
+    else{
+          return "后9码只能输入数字";
+    }
 
     if (totalSum % 10 != 0) {
       return "字號錯誤請重新輸入!";

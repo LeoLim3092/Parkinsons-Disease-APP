@@ -43,13 +43,27 @@ class _ResultPageState extends State<ResultPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('最近一次結果', style: Theme.of(context).textTheme.titleLarge),
+       appBar: AppBar(
+        centerTitle: true,
+        title: Text(
+                '最近一次結果',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white),
+               ),
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Colors.blue, Colors.green],  // Adjust colors as needed
+            ),
+          ),
+        ),
+        backgroundColor: Colors.transparent, // Set this to transparent to see the gradient
       ),
       body: Container(
       decoration: const BoxDecoration(
         image: DecorationImage(
-          image: AssetImage("assets/images/wallpaper.png"), // Replace with the path to your wallpaper image
+          image: AssetImage("assets/images/APP001.jpg"), // Replace with the path to your wallpaper image
           fit: BoxFit.cover,
         ),
       ),
@@ -86,7 +100,7 @@ class _ResultPageState extends State<ResultPage> {
               Expanded(
                 child: Align(
                   alignment: Alignment.centerRight,
-                  child: getScore(double.parse(_gaitResult), 70),
+                  child: getScore(double.parse(_gaitResult), 50),
                 ),
               ),
             ],
@@ -98,25 +112,23 @@ class _ResultPageState extends State<ResultPage> {
           const Text(
           "如果顯示高風險，請無過於擔心，請您找專業神經科醫生，進一步檢查",
           style: TextStyle(fontSize: 28), ),
-          Container(
-              margin:
-              const EdgeInsets.only(left: 100.0, right: 100.0, top: 2.0),
-              padding: const EdgeInsets.only(top: 10.0, bottom: 10.0),
-              width: double.infinity,
-              child: ElevatedButton(
-                  onPressed: () {
-                    gotoMainPage(widget.patient);
-                  },
-                  child: Container(
-                      padding:
-                      const EdgeInsets.only(top: 10.0, bottom: 10.0),
-                      child: Text(
-                        '返回',
-                        style: Theme
-                            .of(context)
-                            .textTheme
-                            .headlineSmall,
-                      )))),
+
+//            Padding(
+//                padding: const EdgeInsets.only(top: 10, bottom: 10), // adding 5 px space at top and bottom
+//                child: Center(
+//                  child: GestureDetector(
+//                    onTap: () =>  gotoMainPage(widget.patient),
+//                    child: Container(
+//                      width: 100,
+//                      child: Image.asset(
+//                        "assets/images/APP027.png",
+//                        fit: BoxFit.contain,
+//                      ),
+//                    ),
+//                  ),
+//                ),
+//              ),
+
         ],
       ),
       ));
