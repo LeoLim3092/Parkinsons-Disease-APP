@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "7714332286",
+    "project_id": "pd-app-49375",
+    "storage_bucket": "pd-app-49375.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:7714332286:android:35337c701f4fc9f9ee822f",
+        "android_client_info": {
+          "package_name": "com.ntu.pd_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "7714332286-ebu3ip9g17i508b6b3n51b2aaktq5jen.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBTGksqkgzcoqwEm-_YLoxxqUSp99AWg_s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "7714332286-ebu3ip9g17i508b6b3n51b2aaktq5jen.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
