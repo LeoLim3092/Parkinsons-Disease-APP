@@ -126,11 +126,8 @@ class _PaintSpiralLeftHandPageState extends State<PaintSpiralLeftHandPage> {
 
                     // await UploadService.uploadPaint(widget.patient.name ?? "", File.fromRawPath(_savedImage), "circle");
 
-                    List<List<Map<String, double>>> coordinatesJson = _controller.getCoordinatesList()
-                        .map((path) => path
-                            .map((offset) => {'x': offset.dx, 'y': offset.dy})
-                            .toList())
-                        .toList();
+                    // Convert coordinates to JSON
+                    List<List<Map<String, dynamic>>> coordinatesJson = _controller.getCoordinatesList();
 
                     // Upload image and coordinates
                     await UploadService.uploadPaint(
@@ -183,7 +180,7 @@ class _HandwrittenSignatureWidgetState
   Path? _path;
   Offset? _previousOffset;
   final List<Path?> _pathList = [];
-  final List<List<Offset>> _coordinatesList = [];
+  final List<List<Map<String, dynamic>>> _coordinatesList = []; 
 
   @override
   void initState() {
@@ -280,14 +277,20 @@ class _HandwrittenSignatureWidgetState
     return GestureDetector(
       onPanStart: (details) {
         var position = details.localPosition;
+        var timestamp = DateTime.now().millisecondsSinceEpoch;
+
+
         setState(() {
           _path = Path()..moveTo(position.dx, position.dy);
           _previousOffset = position;
-          _coordinatesList.add([position]);
+          _coordinatesList.add([
+            {"x": position.dx, "y": position.dy, "t": timestamp} // Add timestamp
+          ]);
         });
       },
       onPanUpdate: (details) {
         var position = details.localPosition;
+        var timestamp = DateTime.now().millisecondsSinceEpoch;
         var dx = position.dx;
         var dy = position.dy;
 
@@ -306,7 +309,11 @@ class _HandwrittenSignatureWidgetState
             );
           }
           _previousOffset = position;
-          _coordinatesList.last.add(position); 
+          _coordinatesList.last.add({
+            "x": position.dx,
+            "y": position.dy,
+            "t": timestamp // Add timestamp
+          });
         });
       },
       onPanEnd: (details) {
