@@ -10,7 +10,6 @@
 #endif
 #endif
 
-#import "FLTSensorsPlusPlugin.h"
 
 FOUNDATION_EXPORT double sensors_plusVersionNumber;
 FOUNDATION_EXPORT const unsigned char sensors_plusVersionString[];

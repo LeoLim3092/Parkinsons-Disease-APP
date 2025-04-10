@@ -59,7 +59,7 @@
                 [self getAudioPlayer].delegate = flautoPlayer;
        }
 
-       -(void)  startPlayerFromURL: (NSURL*) url codec: (t_CODEC)codec channels: (int)numChannels sampleRate: (long)sampleRate
+       -(void)  startPlayerFromURL: (NSURL*) url codec: (t_CODEC)codec channels: (int)numChannels  interleaved: (BOOL)interleaved sampleRate: (long)sampleRate bufferSize: (long)bufferSize
 
        {
                 [self setAudioPlayer: [[AVAudioPlayer alloc] initWithContentsOfURL: url error: nil] ];
@@ -114,6 +114,12 @@
                return true;
        }
 
+       -(bool)  setPan: (double) pan
+       {
+                [self getAudioPlayer].pan=pan;
+                return  true;
+       }
+
 
         -(bool)  setSpeed: (double) speed // speed is between 0.0 and 1.0 to go slower
         {
@@ -138,7 +144,7 @@
        }
 
 
-        - (int) feed: (NSData*)data
+        - (int) feed: (NSArray*)data interleaved: (BOOL)interleaved;
         {
                 return -1;
         }
@@ -154,44 +160,67 @@
         FlautoPlayer* flutterSoundPlayer; // Owner
         AVAudioEngine* engine;
         AVAudioPlayerNode* playerNode;
-        AVAudioFormat* playerFormat;
+        AVAudioFormat* inputFormat;
         AVAudioFormat* outputFormat;
+        AVAudioUnitTimePitch* timePitchUnit;
         AVAudioOutputNode* outputNode;
         AVAudioConverter* converter;
         CFTimeInterval mStartPauseTime ; // The time when playback was paused
-	CFTimeInterval systemTime ; //The time when  StartPlayer() ;
+        CFTimeInterval systemTime ; //The time when  StartPlayer() ;
         double mPauseTime ; // The number of seconds during the total Pause mode
-        NSData* waitingBlock;
+        NSArray<NSData*>* waitingBlock;
         long m_sampleRate ;
         int  m_numChannels;
+        long m_bufferSize;
+        BOOL m_interleaved;
+        t_CODEC m_codec;
 }
 
        - (AudioEngine*)init: (FlautoPlayer*)owner
+                    codec: (t_CODEC)codec
+                    channels: (int)numChannels
+                    interleaved: (bool)interleaved
+                    sampleRate: (long)sampleRate
+ 
        {
+                m_sampleRate = sampleRate;
+                m_numChannels= numChannels;
+                m_interleaved = interleaved;
+                m_codec = codec;
+
                 flutterSoundPlayer = owner;
                 waitingBlock = nil;
                 engine = [[AVAudioEngine alloc] init];
                 outputNode = [engine outputNode];
+                timePitchUnit = [[AVAudioUnitTimePitch alloc] init];
+                [timePitchUnit setRate:1];
            
-                if (@available(iOS 13.0, *)) {
-                    if ([flutterSoundPlayer isVoiceProcessingEnabled]) {
-                        NSError* err;
-                        if (![outputNode setVoiceProcessingEnabled:YES error:&err]) {
-                           [flutterSoundPlayer logDebug:[NSString stringWithFormat:@"error enabling voiceProcessing => %@", err]];
-                        } else {
-                            [flutterSoundPlayer logDebug: @"VoiceProcessing enabled"];
-                        }
-                    }
-                } else {
-                   [flutterSoundPlayer logDebug: @"WARNING! VoiceProcessing is only available on iOS13+"];
-                }
-               
                 outputFormat = [outputNode inputFormatForBus: 0];
+
+                AVAudioCommonFormat commonFormat = (m_codec == pcmFloat32) ? AVAudioPCMFormatFloat32 : AVAudioPCMFormatInt16;
+                inputFormat = [[AVAudioFormat alloc] initWithCommonFormat: commonFormat sampleRate: (double)m_sampleRate channels: m_numChannels interleaved: m_interleaved];
+                assert([inputFormat channelCount] == m_numChannels);
+                assert([inputFormat isInterleaved] == m_interleaved);
+
+           /*
+                AVAudioFormat* format = [outputNode inputFormatForBus: 0];
+                int outputChannelCount = [format channelCount];
+                int outputSampleRate = [format sampleRate];
+                bool outputIsInterleaved = [format isInterleaved];
+                AVAudioCommonFormat outputCommonFormat = [format commonFormat];
+                outputFormat =  [ [AVAudioFormat alloc] initWithCommonFormat: outputCommonFormat
+                                          sampleRate: outputSampleRate
+                                          channels: outputChannelCount
+                                          interleaved: outputIsInterleaved];
+            */
                 playerNode = [[AVAudioPlayerNode alloc] init];
 
                 [engine attachNode: playerNode];
 
-                [engine connect: playerNode to: outputNode format: outputFormat];
+                [engine attachNode: timePitchUnit];
+
+                [engine connect: playerNode to: timePitchUnit format: outputFormat];
+                [engine connect: timePitchUnit to: outputNode format: outputFormat];                
                 bool b = [engine startAndReturnError: nil];
                 if (!b)
                 {
@@ -199,22 +228,26 @@
                 }
 
                 mPauseTime = 0.0; // Total number of seconds in pause mode
-		mStartPauseTime = -1; // Not in paused mode
-		systemTime = CACurrentMediaTime(); // The time when started
+                mStartPauseTime = -1; // Not in paused mode
+                systemTime = CACurrentMediaTime(); // The time when started
                 return [super init];
        }
 
        -(void) startPlayerFromBuffer: (NSData*) dataBuffer
        {
-                 [self feed: dataBuffer] ;
+           NSArray* d = @[dataBuffer];
+           [self feed: d interleaved: true] ;
        }
         static int ready = 0;
 
-       -(void)  startPlayerFromURL: (NSURL*) url codec: (t_CODEC)codec channels: (int)numChannels sampleRate: (long)sampleRate
+       -(void)  startPlayerFromURL: (NSURL*) url codec: (t_CODEC)codec channels:  (int)numChannels  interleaved: (BOOL)interleaved  sampleRate: (long)sampleRate bufferSize: (long)bufferSize
        {
                 assert(url == nil || url ==  (id)[NSNull null]);
                 m_sampleRate = sampleRate;
                 m_numChannels= numChannels;
+                m_bufferSize = bufferSize;
+                m_interleaved = interleaved;
+                m_codec = codec;
                 ready = 0;
        }
 
@@ -244,7 +277,11 @@
                                 [playerNode stop];
                                 // Does not work !!! // [engine detachNode:  playerNode];
                                 playerNode = nil;
-                         }
+                        }
+                        if (timePitchUnit != nil)
+                             {
+                                     timePitchUnit = nil;
+                             }
                         [engine stop];
                         engine = nil;
                     
@@ -284,6 +321,8 @@
                 return false;
        }
 
+
+
        -(int)  getStatus
        {
                 if (engine == nil)
@@ -296,19 +335,66 @@
        }
 
         #define NB_BUFFERS 4
-        - (int) feed: (NSData*)data
+        - (int) feed: (NSArray*)data interleaved: (bool)interleaved
         {
-                if (ready < NB_BUFFERS )
+                //NSMutableArray* data = [[NSMutableArray alloc] init];
+                //NSData* d = data[0];
+                //assert (audioData.count > 0); // Something wrong
+                if (ready < NB_BUFFERS  )
                 {
-                        int ln = (int)[data length];
-                        int frameLn = ln/2;
-                        int frameLength =  8*frameLn;// Two octets for a frame (Monophony, INT Linear 16)
+                        int ln = (int)[data[0] length]; // number of bytes to feed
+                        int frameSize; // The size in bytes of each frame.
+                        if (m_codec == pcm16)
+                        {
+                            frameSize = 2 * m_numChannels;
+                        } else
+                        if (m_codec == pcmFloat32)
+                        {
+                            frameSize = 4 * m_numChannels;
+                        } else
+                        {
+                            assert(false);
+                        }
+                        int frameCount = ln / frameSize;
+                        if (!interleaved)
+                        {
+                            frameCount = frameCount * m_numChannels; // WHY ???
+                        }
+                        //int sampleCount = interleaved ? frameCount * m_numChannels : frameCount;
 
-                        playerFormat = [[AVAudioFormat alloc] initWithCommonFormat: AVAudioPCMFormatInt16 sampleRate: (double)m_sampleRate channels: m_numChannels interleaved: NO];
-
-                        AVAudioPCMBuffer* thePCMInputBuffer =  [[AVAudioPCMBuffer alloc] initWithPCMFormat: playerFormat frameCapacity: frameLn];
-                        memcpy((unsigned char*)(thePCMInputBuffer.int16ChannelData[0]), [data bytes], ln);
-                        thePCMInputBuffer.frameLength = frameLn;
+                        AVAudioPCMBuffer* thePCMInputBuffer =  [[AVAudioPCMBuffer alloc] initWithPCMFormat: inputFormat frameCapacity: frameCount*2];// !!!!!
+                        if (interleaved)
+                        {
+                            if (m_codec == pcm16)
+                            {
+                                memcpy((unsigned char*)(thePCMInputBuffer.int16ChannelData[0]), [data[0] bytes], ln); // Here we suppose that the input data are always interleaved
+                            } else
+                            if (m_codec == pcmFloat32)
+                            {
+                                memcpy((unsigned char*)(thePCMInputBuffer.floatChannelData[0]), [data[0] bytes], ln); // Here we suppose that the input data are always interleaved
+                            } else
+                            {
+                                assert(false);
+                            }
+                        } else
+                        {
+                            for (int channel = 0; channel < m_numChannels; ++channel)
+                            {
+                                if (m_codec == pcm16)
+                                {
+                                    memcpy((unsigned char*)(thePCMInputBuffer.int16ChannelData[channel]), [data[channel] bytes], ln);
+                                } else
+                                if (m_codec == pcmFloat32)
+                                {
+                                    memcpy((unsigned char*)(thePCMInputBuffer.floatChannelData[channel]), [data[channel] bytes], ln);
+                                } else
+                                {
+                                    assert(false);
+                                }
+                            }
+                        }
+                        thePCMInputBuffer.frameLength = frameCount;
+                    
                         static bool hasData = true;
                         hasData = true;
                         AVAudioConverterInputBlock inputBlock = ^AVAudioBuffer*(AVAudioPacketCount inNumberOfPackets, AVAudioConverterInputStatus* outStatus)
@@ -317,60 +403,85 @@
                                 hasData = false;
                                 return thePCMInputBuffer;
                         };
-
-                        AVAudioPCMBuffer* thePCMOutputBuffer = [[AVAudioPCMBuffer alloc] initWithPCMFormat: outputFormat frameCapacity: frameLength];
+                    
+                        //int output_channels = [outputFormat channelCount];
+                        AVAudioPCMBuffer* thePCMOutputBuffer = [[AVAudioPCMBuffer alloc] initWithPCMFormat: outputFormat frameCapacity: 8*frameCount]; // I don't understand why multiplied by 8 // !!!!!!!!!
                         thePCMOutputBuffer.frameLength = 0;
 
                         if (converter == nil) 
                         {
-                                converter = [[AVAudioConverter alloc]initFromFormat: playerFormat toFormat: outputFormat];
+                                converter = [[AVAudioConverter alloc]initFromFormat: inputFormat toFormat: outputFormat];
                         }
 
                         NSError* error;
                         [converter convertToBuffer: thePCMOutputBuffer error: &error withInputFromBlock: inputBlock];
-                         // if (r == AVAudioConverterOutputStatus_HaveData || true)
+                        
+                        //int numberOfConvertedFrames = thePCMOutputBuffer.frameLength;
+                    
+                        ++ready ; // The number of waiting packets to be sent by the Device
+                        [playerNode scheduleBuffer: thePCMOutputBuffer  completionHandler:
+                        ^(void)
                         {
-                                ++ready ;
-                                [playerNode scheduleBuffer: thePCMOutputBuffer  completionHandler:
-                                ^(void)
-                                {
-                                        dispatch_async(dispatch_get_main_queue(),
-                                        ^{
-                                                --ready;
-                                                assert(ready < NB_BUFFERS);
-                                                if (self ->waitingBlock != nil)
-                                                {
-                                                        NSData* blk = self ->waitingBlock;
-                                                        self ->waitingBlock = nil;
-                                                        int ln = (int)[blk length];
-                                                        int l = [self feed: blk]; // Recursion here
-                                                        assert (l == ln);
-                                                        [self ->flutterSoundPlayer needSomeFood: ln];
-                                                }
-                                        });
+                                dispatch_async(dispatch_get_main_queue(),
+                                ^{
+                                        --ready; // The Device has sent its packet. One less to send.
+                                        assert(ready < NB_BUFFERS || !interleaved);
+                                        if (self ->waitingBlock != nil)
+                                        {
+                                                NSArray<NSData*>* blk = self ->waitingBlock;
+                                                self ->waitingBlock = nil;
+                                                int ln = (int)[blk[0] length];
+                                                int l = [self feed: blk interleaved: interleaved]; // Recursion here
+                                                assert (l == ln);
+                                                [self ->flutterSoundPlayer needSomeFood: ln];
+                                        }
+                                        if (ready == 0) // Nothing more to play. Send an indication to the App
+                                        {
+                                                [self ->flutterSoundPlayer  audioPlayerDidFinishPlaying: true];
 
-                                }];
-                                return ln;
-                        }
+                                        }
+                                });
+
+                        }];
+                        return ln;
+                
                 } else
                 {
-                        assert (ready == NB_BUFFERS);
-                        assert(waitingBlock == nil);
+                        assert (ready == NB_BUFFERS || !interleaved);
+                        // !!! assert(waitingBlock == nil);
                         waitingBlock = data;
                         return 0;
                 }
          }
 
--(bool)  setVolume: (double) volume fadeDuration: (NSTimeInterval)fadeDuration// TODO
+
+
+   
+-(bool)  setVolume: (double) volume fadeDuration: (NSTimeInterval)fadeDuration
 {
-        return true; // TODO
+        if (playerNode == nil || playerNode ==  (id)[NSNull null]) return false;
+        [playerNode setVolume: volume];
+
+        //TODO: implement fadeDuration programmatically since its not available on playerNode
+        return true;
 }
 
-- (bool) setSpeed: (double) speed
+-(bool)  setPan: (double) pan
 {
-        return true; // TODO
+        if (playerNode == nil || playerNode ==  (id)[NSNull null]) return false;
+
+        //TODO
+        return true;
 }
 
+
+-(bool)  setSpeed: (double) rate // range: 1/32 -> 32
+{
+         if (timePitchUnit == nil || timePitchUnit ==  (id)[NSNull null]) return false;
+         if (rate < 1/32 || rate > 32) return false;
+         [timePitchUnit setRate: rate];
+         return true;
+}
 
 @end
 
@@ -381,12 +492,8 @@
 {
         FlautoPlayer* flutterSoundPlayer; // Owner
         AVAudioEngine* engine;
-        AVAudioPlayerNode* playerNode;
-        AVAudioFormat* playerFormat;
-        AVAudioFormat* outputFormat;
-        AVAudioOutputNode* outputNode;
         CFTimeInterval mStartPauseTime ; // The time when playback was paused
-	CFTimeInterval systemTime ; //The time when  StartPlayer() ;
+        CFTimeInterval systemTime ; //The time when  StartPlayer() ;
         double mPauseTime ; // The number of seconds during the total Pause mode
         NSData* waitingBlock;
         long m_sampleRate ;
@@ -395,15 +502,8 @@
 
        - (AudioEngineFromMic*)init: (FlautoPlayer*)owner
        {
+               //engine = [[AVAudioEngine alloc] init];
                 flutterSoundPlayer = owner;
-                waitingBlock = nil;
-                engine = [[AVAudioEngine alloc] init];
-                
-                AVAudioInputNode* inputNode = [engine inputNode];
-                outputNode = [engine outputNode];
-                outputFormat = [outputNode inputFormatForBus: 0];
-                
-                [engine connect: inputNode to: outputNode format: outputFormat];
                 return [super init];
        }
        
@@ -428,13 +528,63 @@
 		return (long)(time * 1000);
        }
 
-       -(void)  startPlayerFromURL: (NSURL*) url codec: (t_CODEC)codec channels: (int)numChannels sampleRate: (long)sampleRate
+       -(void)  startPlayerFromURL: (NSURL*) url codec: (t_CODEC)codec channels: (int)numChannels interleaved: (BOOL)interleaved sampleRate: (long)sampleRate bufferSize: (long)bufferSize
        {
                 assert(url == nil || url ==  (id)[NSNull null]);
 
                 m_sampleRate = sampleRate;
                 m_numChannels= numChannels;
 
+               waitingBlock = nil;
+               //AVAudioEngine* engine = [[AVAudioEngine alloc] init];
+               engine = [[AVAudioEngine alloc] init];
+               AVAudioInputNode* inputNode = [engine inputNode];
+               AVAudioOutputNode* outputNode = [engine outputNode];
+               //[engine attachNode:inputNode];
+               
+               //if (enableVoiceProcessing) {
+                       if (@available(iOS 13.0, *)) {
+                               NSError* err;
+                               if (![inputNode setVoiceProcessingEnabled: YES error: &err]) {
+                                       [flutterSoundPlayer logDebug: [NSString stringWithFormat:@"error enabling voiceProcessing => %@", err]];
+                               } else {
+                                       [flutterSoundPlayer logDebug: @"VoiceProcessing enabled"];
+                               }
+                               if (![outputNode setVoiceProcessingEnabled: YES error: &err]) {
+                                       [flutterSoundPlayer logDebug: [NSString stringWithFormat:@"error enabling voiceProcessing => %@", err]];
+                               } else {
+                                       [flutterSoundPlayer logDebug: @"VoiceProcessing enabled"];
+                               }
+
+                       } else {
+                               [flutterSoundPlayer logDebug: @"WARNING! VoiceProcessing is only available on iOS13+"];
+                       }
+               
+
+// ================================
+
+               AVAudioFormat* outputFormat = [[AVAudioFormat alloc] initStandardFormatWithSampleRate:
+                                                                         48000
+                                                                          channels: 2
+                                                                       ];
+               /*
+               AVAudioPCMBuffer* buffer = [[AVAudioPCMBuffer alloc] initWithPCMFormat: outputFormat
+                                                                        frameCapacity: (AVAudioFrameCount)bufferSize];
+               buffer.frameLength = (AVAudioFrameCount)buffer.frameCapacity;
+               int nbChannel = [
+                       buffer.format channelCount
+               ];
+               double sr = [buffer.format sampleRate];
+               //memset(buffer.int16ChannelData[0], 0, buffer.frameLength * outputFormat.streamDescription->mBytesPerFrame); // zero fill
+               //AVAudioMixerNode *mainMixer = [engine mainMixerNode];
+
+           // The following line results in a kAudioUnitErr_FormatNotSupported -10868 error
+              // [engine connect: inputNode to: outputNode format:buffer.format];
+ */
+// =======================
+               //AVAudioFormat* format = [inputNode outputFormatForBus: 0];
+               [engine connect: inputNode to: outputNode format: outputFormat];
+               
                 mPauseTime = 0.0; // Total number of seconds in pause mode
 		mStartPauseTime = -1; // Not in paused mode
 		systemTime = CACurrentMediaTime(); // The time when started
@@ -454,10 +604,13 @@
 
         -(bool) play
         {
-                bool b = [engine startAndReturnError: nil];
+                NSError* err;
+                bool b = [engine startAndReturnError: &err];
                 if (!b)
                 {
-                        [flutterSoundPlayer logDebug: @"Cannot start the audio engine"];
+                        NSString* s = err.localizedDescription;
+                        [flutterSoundPlayer logDebug: [NSString stringWithFormat:@"Cannot start the audio engine => %@", err]];
+                        [flutterSoundPlayer logDebug: s];
                 }
                 return b;
         }
@@ -491,15 +644,20 @@
                 return true; // TODO
         }
 
+        -(bool)  setPan: (double) pan // TODO
+        {
+                return true; // TODO
+        }
+
         -(bool)  setSpeed: (double) speed // TODO
         {
                 return true; // TODO
         }
 
-      - (int) feed: (NSData*)data
-       {
-        return 0;
-       }
+        - (int) feed: (NSArray*)data interleaved: (BOOL)interleaved
+        {
+                return 0;
+        }
 
 
 //-------------------------------------------------------------------------------------------------------------------------------------------

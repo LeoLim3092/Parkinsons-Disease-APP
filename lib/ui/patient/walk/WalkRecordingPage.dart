@@ -1,16 +1,19 @@
 import 'package:camera/camera.dart';
+import 'package:provider/provider.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:keep_screen_on/keep_screen_on.dart';
+
 import 'package:pd_app/api/UploadService.dart';
 import 'package:pd_app/model/Patient.dart';
 import 'package:pd_app/ui/patient/walk/WalkRecordingCubit.dart' as WRC;
-import 'package:pd_app/utils/TimeUtil.dart';
 import 'package:pd_app/prefs/UploadStatus.dart';
-import 'package:provider/provider.dart';
+
+import 'package:pd_app/utils/UploadUtil.dart';
+import 'package:pd_app/utils/TimeUtil.dart';
 
 
 class WalkRecordingPage extends StatefulWidget {
@@ -85,7 +88,22 @@ class _WalkRecordingPageState extends State<WalkRecordingPage> with WidgetsBindi
           if (action is WRC.Error) {
             showInSnackBar(action.metaData);
           } else if (action is WRC.Dialog) {
-            showUpload(action.metaData);
+            showUploadDialog(
+              context: context,
+              filePath: action.metaData, // Assuming `action.metaData` contains the file path
+              uploadFunction: (filePath) => UploadService.uploadWalkRecording(
+                widget.patient.patientId ?? "",
+                filePath,
+              ),
+              onSuccessNavigation: () => Navigator.of(context).pushReplacement(
+                MaterialPageRoute(
+                  builder: (context) => PatientActionPage(patient: widget.patient),
+                ),
+              dialogTitle: "上傳",
+              dialogContent: "請問您是否要上傳步態影片？",
+              cancelText: "取消",
+              uploadText: "上傳",
+            );
           }
         },
         listenWhen: (prev, cur) {
@@ -263,34 +281,4 @@ class _WalkRecordingPageState extends State<WalkRecordingPage> with WidgetsBindi
     cameraController.setFocusPoint(offset);
   }
 
-  void showUpload(String path) async {
-    final uploadStatus = Provider.of<UploadStatus>(context, listen: false);
-    showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) {
-          return AlertDialog(title: const Text("上傳", style:
-          TextStyle(fontSize: 28)), content: const Text("請問請問您是否要上傳步態影片", style:
-          TextStyle(fontSize: 28)), actions: <Widget>[
-            TextButton(
-              child: const Text("取消", style:
-              TextStyle(fontSize: 28)),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-            TextButton(
-              child: const Text("上傳", style:
-              TextStyle(fontSize: 28)),
-              onPressed: () async {
-                EasyLoading.show(status: '上傳中');
-                var response = await UploadService.uploadWalkRecording(widget.patient.patientId ?? "", path);
-                if (response.statusCode == 200) {
-                  uploadStatus.setUploadGaitStatus(true);
-                }
-                EasyLoading.dismiss();
-                Navigator.of(context).pop(true);
-              },
-            ),
-          ]);
-        });
-  }
 }

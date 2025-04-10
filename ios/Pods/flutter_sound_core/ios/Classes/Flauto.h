@@ -4,7 +4,7 @@
  * This file is part of Flutter-Sound.
  *
  * Flutter-Sound is free software: you can redistribute it and/or modify
- * it under the terms of the Mozilla Public License version 2 (MPL2.0),
+ * it under the terms of the Mozilla Public License version 2 (MPL-2.0),
  * as published by the Mozilla organization.
  *
  * Flutter-Sound is distributed in the hope that it will be useful,
@@ -89,6 +89,8 @@ typedef enum
           /// Vorbis with a WebM format
           vorbisWebM,
   
+          /// Linear PCM32 PCM, which is a Wave file.
+          pcmFloat32WAV,
 } t_CODEC;
 
 
@@ -104,13 +106,31 @@ typedef enum
 
 typedef enum
 {
-     VERBOSE,
-     DBG,
-     INFO,
-     WARNING,
-     ERROR,
-     WTF,
-     NOTHING,
+        /*
+          all(0),
+          @Deprecated('[verbose] is being deprecated in favor of [trace].')
+          verbose(999),
+          trace(1000),
+          debug(2000),
+          info(3000),
+          warning(4000),
+          error(5000),
+          @Deprecated('[wtf] is being deprecated in favor of [fatal].')
+          wtf(5999),
+          fatal(6000),
+          @Deprecated('[nothing] is being deprecated in favor of [off].')
+          nothing(9999),
+          off(10000),
+         */
+        
+     ALL = 0,
+     VERBOSE = 999,
+     DBG = 2000,
+     INFO = 3000,
+     WARNING = 4000,
+     ERROR = 5000,
+     WTF = 5999,
+     NOTHING = 9999,
 } t_LOG_LEVEL;
 
 

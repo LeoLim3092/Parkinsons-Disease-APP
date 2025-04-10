@@ -1,24 +1,26 @@
+import 'dart:async';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:provider/provider.dart';
+
 import 'package:pd_app/model/Patient.dart';
+import 'package:pd_app/api/UploadService.dart';
+import 'package:pd_app/api/PredictService.dart';
+import 'package:pd_app/ui/login/LoginPage.dart';
 import 'package:pd_app/ui/patient/gesture/GestureRecordingPageLeft.dart';
 import 'package:pd_app/ui/patient/gesture/GestureRecordingPageRight.dart';
 import 'package:pd_app/ui/patient/sound_recording/SoundRecordingPage.dart';
 import 'package:pd_app/ui/patient/sound_recording/SoundRecordingFreeTalkPage.dart';
 import 'package:pd_app/ui/patient/walk/WalkRecordingPage.dart';
 import 'package:pd_app/ui/patient/action/newResultPage.dart';
-import 'package:pd_app/api/UploadService.dart';
-import 'package:pd_app/api/PredictService.dart';
 import 'package:pd_app/ui/patient/info/HelpPages.dart';
 import 'package:pd_app/ui/patient/info/HandWritingHelp.dart';
-import 'package:pd_app/ui/login/LoginPage.dart';
-import 'package:provider/provider.dart';
-import 'package:pd_app/prefs/UploadStatus.dart';
-import 'dart:async';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:pd_app/ui/patient/paint/PaintThreePage.dart';
 import 'package:pd_app/ui/patient/action/VideoPageNew.dart';
+import 'package:pd_app/prefs/UploadStatus.dart';
 
 
 final RouteObserver<ModalRoute<dynamic>> routeObserver =
@@ -46,7 +48,7 @@ class _PatientActionPageState extends State<PatientActionPage> with RouteAware, 
   void initState() {
     int age;
     Future(() {
-      showMedicationDialog();
+      // showMedicationDialog(); // turn off for hospital data collection.
       age = widget.patient.age ?? 0;
       if (age < 50){
         showAgeWarningDialog();
@@ -287,11 +289,14 @@ Widget getActionButton(VoidCallback click, String imgPath) {
         )));
   }
 
-  void gotoHandWritingHelp(Patient patient) async {
+  // void gotoHandWritingHelp(Patient patient) async {
+  //   Navigator.of(context).push(MaterialPageRoute(
+  //       builder: (context) => HandWritingHelp(patient: patient)));
+  // }
+
+  void  gotoPaintThreePage(Patient patient) async {
     Navigator.of(context).push(MaterialPageRoute(
-        builder: (context) => HandWritingHelp(patient: patient)));
-    // Navigator.of(context).push(MaterialPageRoute(
-    //     builder: (context) => VideoPage(patient: patient)));
+        builder: (context) => PaintThreePage(patient: patient)));
   }
 
   void showMedicationDialog() {
@@ -482,7 +487,8 @@ Widget getActionButton(VoidCallback click, String imgPath) {
                 onPressed: () {
                   performPredictions(patient, context);
                   Navigator.of(context).pop();
-                  gotoHandWritingHelp(widget.patient);
+                  gotoPaintThreePage(widget.patient);
+                  // gotoHandWritingHelp(widget.patient);
                   // showLoadingAnimation(patient, context);
                 },
               ),

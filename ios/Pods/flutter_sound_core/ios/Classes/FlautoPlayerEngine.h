@@ -36,7 +36,7 @@
 @protocol FlautoPlayerEngineInterface <NSObject>
 
        - (void) startPlayerFromBuffer:  (NSData*)data ;
-       - (void) startPlayerFromURL: (NSURL*) url codec: (t_CODEC)codec channels: (int)numChannels sampleRate: (long)sampleRate ;
+       - (void) startPlayerFromURL: (NSURL*) url codec: (t_CODEC)codec channels: (int)numChannels interleaved: (BOOL)interleaved sampleRate: (long)sampleRate bufferSize: (long)bufferSize ;
        - (long) getDuration;
        - (long) getPosition;
        - (void) stop;
@@ -44,31 +44,32 @@
        - (bool) resume;
        - (bool) pause;
        - (bool) setVolume: (double) volume fadeDuration: (NSTimeInterval)fadeDuration; // Volume is between 0.0 and 1.0
+       - (bool) setPan: (double) pan; // Pan is between -1.0 and 1.0
        - (bool) setSpeed: (double) speed ; // Speed is between 0.0 and 1.0 to go slower
        - (bool) seek: (double) pos;
        - (t_PLAYER_STATE) getStatus;
-       - (int) feed: (NSData*)data;
+       - (int) feed: (NSArray*)data interleaved: (BOOL)interleaved;
 
 @end
 
 @interface AudioPlayerFlauto : NSObject  <FlautoPlayerEngineInterface>
 {
 }
-- (AudioPlayerFlauto*) init: (NSObject*)owner ;// FlutterSoundPlayer*
-
+       - (AudioPlayerFlauto*) init: (NSObject*)owner ;// FlutterSoundPlayer*
        - (void) startPlayerFromBuffer:  (NSData*)data ;
-       - (void) startPlayerFromURL: (NSURL*) url codec: (t_CODEC)codec channels: (int)numChannels sampleRate: (long)sampleRate ;
+       - (void) startPlayerFromURL: (NSURL*) url codec: (t_CODEC)codec channels: (int)numChannels interleaved: (BOOL)interleaved sampleRate: (long)sampleRate bufferSize: (long)bufferSize;
        - (void) stop;
        - (bool) play;
        - (bool) resume;
        - (bool) pause;
        - (bool) setVolume: (double) volume fadeDuration: (NSTimeInterval)duration ;// Volume is between 0.0 and 1.0
+       - (bool) setPan: (double) pan; // Pan is between -1.0 and 1.0
        - (bool) setSpeed: (double) speed ;// Volume is between 0.0 and 1.0
        - (bool) seek: (double) pos;
        - (t_PLAYER_STATE) getStatus;
        - (AVAudioPlayer*) getAudioPlayer;
        - (void) setAudioPlayer: (AVAudioPlayer*)thePlayer;
-       - (int) feed: (NSData*)data;
+       - (int) feed: (NSArray*)data interleaved: (BOOL)interleaved;
 
 @end
 
@@ -77,19 +78,25 @@
 {
         // TODO FlutterSoundPlayer* flutterSoundPlayer; // Owner
 }
-       - (AudioEngine*) init: (NSObject*)owner; // FlutterSoundPlayer*
+       - (AudioEngine*) init: (NSObject*)owner
+                        codec: (t_CODEC)codec 
+                        channels: (int)numChannels
+                        interleaved: (BOOL)interleaved 
+                        sampleRate: (long)sampleRate;
+                        ; 
 
        - (void) startPlayerFromBuffer:  (NSData*)data ;
-       - (void) startPlayerFromURL: (NSURL*) url codec: (t_CODEC)codec channels: (int)numChannels sampleRate: (long)sampleRate ;
+       - (void) startPlayerFromURL: (NSURL*) url codec: (t_CODEC)codec channels: (int)numChannels interleaved: (BOOL)interleaved sampleRate: (long)sampleRate bufferSize: (long)bufferSize;
        - (bool) play;
        - (void) stop;
        - (bool) resume;
        - (bool) pause;
        - (bool) setVolume: (double) volume  fadeDuration:(NSTimeInterval)duration ;
+       - (bool) setPan: (double) pan;
        - (bool) setSpeed: (double) speed ;
        - (bool) seek: (double) pos;
        - (int)  getStatus;
-       - (int) feed: (NSData*)data;
+       - (int) feed: (NSArray*)data interleaved: (BOOL)interleaved;
 
 @end
 
@@ -101,16 +108,17 @@
        - (AudioEngineFromMic*) init: (NSObject*)owner; // FlutterSoundPlayer*
 
        - (void) startPlayerFromBuffer:  (NSData*)data ;
-       - (void) startPlayerFromURL: (NSURL*) url codec: (t_CODEC)codec channels: (int)numChannels sampleRate: (long)sampleRate ;
+       - (void) startPlayerFromURL: (NSURL*) url codec: (t_CODEC)codec channels: (int)numChannels interleaved: (BOOL)interleaved sampleRate: (long)sampleRate bufferSize: (long)bufferSize ;
        - (void) stop;
        - (bool) play;
        - (bool) resume;
        - (bool) pause;
        - (bool) setVolume: (double) volume  fadeDuration:(NSTimeInterval)duration ;
+       - (bool) setPan: (double) pan ;       
        - (bool) setSpeed: (double) speed;
        - (bool) seek: (double) pos;
        - (int) getStatus;
-       - (int) feed: (NSData*)data;
+       - (int) feed: (NSArray*)data interleaved: (BOOL)interleaved;
 
 @end
 

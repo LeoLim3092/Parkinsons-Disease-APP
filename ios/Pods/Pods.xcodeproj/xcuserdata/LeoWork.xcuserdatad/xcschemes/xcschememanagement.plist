@@ -4,6 +4,11 @@
 <dict>
 	<key>SchemeUserState</key>
 	<dict>
+		<key>AppAuth-AppAuthCore_Privacy.xcscheme</key>
+		<dict>
+			<key>isShown</key>
+			<false/>
+		</dict>
 		<key>AppAuth.xcscheme</key>
 		<dict>
 			<key>isShown</key>
@@ -14,7 +19,17 @@
 			<key>isShown</key>
 			<false/>
 		</dict>
+		<key>FirebaseCore-FirebaseCore_Privacy.xcscheme</key>
+		<dict>
+			<key>isShown</key>
+			<false/>
+		</dict>
 		<key>FirebaseCore.xcscheme</key>
+		<dict>
+			<key>isShown</key>
+			<false/>
+		</dict>
+		<key>FirebaseCoreInternal-FirebaseCoreInternal_Privacy.xcscheme</key>
 		<dict>
 			<key>isShown</key>
 			<false/>
@@ -29,7 +44,22 @@
 			<key>isShown</key>
 			<false/>
 		</dict>
+		<key>GTMAppAuth-GTMAppAuth_Privacy.xcscheme</key>
+		<dict>
+			<key>isShown</key>
+			<false/>
+		</dict>
 		<key>GTMAppAuth.xcscheme</key>
+		<dict>
+			<key>isShown</key>
+			<false/>
+		</dict>
+		<key>GTMSessionFetcher-GTMSessionFetcher_Core_Privacy.xcscheme</key>
+		<dict>
+			<key>isShown</key>
+			<false/>
+		</dict>
+		<key>GTMSessionFetcher-GTMSessionFetcher_Full_Privacy.xcscheme</key>
 		<dict>
 			<key>isShown</key>
 			<false/>
@@ -49,6 +79,11 @@
 			<key>isShown</key>
 			<false/>
 		</dict>
+		<key>GoogleUtilities-GoogleUtilities_Privacy.xcscheme</key>
+		<dict>
+			<key>isShown</key>
+			<false/>
+		</dict>
 		<key>GoogleUtilities.xcscheme</key>
 		<dict>
 			<key>isShown</key>
@@ -59,12 +94,12 @@
 			<key>isShown</key>
 			<false/>
 		</dict>
-		<key>PromisesObjC.xcscheme</key>
+		<key>audio_session.xcscheme</key>
 		<dict>
 			<key>isShown</key>
 			<false/>
 		</dict>
-		<key>audio_session.xcscheme</key>
+		<key>camera_avfoundation-camera_avfoundation_privacy.xcscheme</key>
 		<dict>
 			<key>isShown</key>
 			<false/>
@@ -75,6 +110,11 @@
 			<false/>
 		</dict>
 		<key>firebase_core.xcscheme</key>
+		<dict>
+			<key>isShown</key>
+			<false/>
+		</dict>
+		<key>flutter_native_splash-flutter_native_splash_privacy.xcscheme</key>
 		<dict>
 			<key>isShown</key>
 			<false/>
@@ -94,6 +134,11 @@
 			<key>isShown</key>
 			<false/>
 		</dict>
+		<key>google_sign_in_ios-google_sign_in_ios_privacy.xcscheme</key>
+		<dict>
+			<key>isShown</key>
+			<false/>
+		</dict>
 		<key>google_sign_in_ios.xcscheme</key>
 		<dict>
 			<key>isShown</key>
@@ -104,7 +149,27 @@
 			<key>isShown</key>
 			<false/>
 		</dict>
-		<key>path_provider_ios.xcscheme</key>
+		<key>package_info_plus-package_info_plus_privacy.xcscheme</key>
+		<dict>
+			<key>isShown</key>
+			<false/>
+		</dict>
+		<key>package_info_plus.xcscheme</key>
+		<dict>
+			<key>isShown</key>
+			<false/>
+		</dict>
+		<key>path_provider_foundation-path_provider_foundation_privacy.xcscheme</key>
+		<dict>
+			<key>isShown</key>
+			<false/>
+		</dict>
+		<key>path_provider_foundation.xcscheme</key>
+		<dict>
+			<key>isShown</key>
+			<false/>
+		</dict>
+		<key>permission_handler_apple-permission_handler_apple_privacy.xcscheme</key>
 		<dict>
 			<key>isShown</key>
 			<false/>
@@ -114,12 +179,27 @@
 			<key>isShown</key>
 			<false/>
 		</dict>
+		<key>sensors_plus-sensors_plus_privacy.xcscheme</key>
+		<dict>
+			<key>isShown</key>
+			<false/>
+		</dict>
 		<key>sensors_plus.xcscheme</key>
 		<dict>
 			<key>isShown</key>
 			<false/>
 		</dict>
-		<key>shared_preferences_ios.xcscheme</key>
+		<key>shared_preferences_foundation-shared_preferences_foundation_privacy.xcscheme</key>
+		<dict>
+			<key>isShown</key>
+			<false/>
+		</dict>
+		<key>shared_preferences_foundation.xcscheme</key>
+		<dict>
+			<key>isShown</key>
+			<false/>
+		</dict>
+		<key>video_player_avfoundation-video_player_avfoundation_privacy.xcscheme</key>
 		<dict>
 			<key>isShown</key>
 			<false/>
@@ -129,7 +209,12 @@
 			<key>isShown</key>
 			<false/>
 		</dict>
-		<key>wakelock.xcscheme</key>
+		<key>wakelock_plus-wakelock_plus_privacy.xcscheme</key>
+		<dict>
+			<key>isShown</key>
+			<false/>
+		</dict>
+		<key>wakelock_plus.xcscheme</key>
 		<dict>
 			<key>isShown</key>
 			<false/>

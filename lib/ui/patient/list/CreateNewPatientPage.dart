@@ -35,7 +35,6 @@ class _CreateNewPatientPageState extends State<CreateNewPatientPage> {
   void initState() {
     usernameInput.text = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
     userpasswordInput.text = "test1111" ;
-    ageInput.text = "";
     emailInput.text = "";
     dateInput.text = "";
     _isButtonDisabled = true;
@@ -67,18 +66,10 @@ class _CreateNewPatientPageState extends State<CreateNewPatientPage> {
     return null;
   }
 
-  String? get _errorTextAge{
-    final age_text = ageInput.value.text;
-    if(age_text.isEmpty){
-      return '請輸入年齡';
-    }
-    return null;
-  }
-
   String? get _errorTextBirthday{
     final date_text = dateInput.value.text;
     if(date_text.isEmpty){
-      return '請選擇出生日期';
+      return '出生日期';
     }
     return null;
   }
@@ -176,63 +167,33 @@ class _CreateNewPatientPageState extends State<CreateNewPatientPage> {
                     });
                     },
               ),
-              /*
-              Container(
-               margin:
-                const EdgeInsets.only(left: 20.0, right: 20.0, top: 20.0),
-                child: TextField(
-                    controller: ageInput,
-                    decoration: InputDecoration(
-                      border: UnderlineInputBorder(),
-                      labelText: '年齡',
-                      errorText: _errorTextAge,
-                    ),
-                    onChanged: (text) => setState(() => checkAllRequiredValueFilled()),
-                  ),
-            ),
-            */
 
             Container(
               margin: const EdgeInsets.only(left: 20.0, right: 20.0, top: 20.0),
-
               child: TextField(
-              controller: dateInput,
-              //editing controller of this TextField
-              decoration: InputDecoration(
-                  icon: Icon(Icons.calendar_today), //icon of text field
-                  labelText: "生日", //label text of field
+                controller: dateInput,
+                decoration: InputDecoration(
+                  border: UnderlineInputBorder(),
+                  labelText: "生日", // Label text for the field
                   errorText: _errorTextBirthday,
-                  ),
-              readOnly: true,
-              onChanged: (text) => setState(() => checkAllRequiredValueFilled()),
-              //set it true, so that user will not able to edit text
-              onTap: () async {
-                DateTime? pickedDate = await showDatePicker(
-                    context: context,
-                    initialDate: DateTime.now(),
-                    firstDate: DateTime(1900),
-                    //DateTime.now() - not to allow to choose before today.
-                    lastDate: DateTime.now());
-
-                if (pickedDate != null) {
-                  print(
-                      pickedDate); //pickedDate output format => 2021-03-10 00:00:00.000
-                  String formattedDate =
-                      DateFormat('yyyy-MM-dd').format(pickedDate);
-                  print(
-                      formattedDate); //formatted date output using intl package =>  2021-03-16
-                  //print('ageCal: '+ calculateAge(pickedDate).toString());
-                  age = calculateAge(pickedDate).toString();
+                ),
+                onChanged: (text) {
                   setState(() {
-                    dateInput.text = formattedDate; //set output date to TextField value.
                     checkAllRequiredValueFilled();
+                    try {
+                      // Try to parse the input text into a DateTime object
+                      DateTime parsedDate = DateFormat('yyyy/MM/dd').parse(text);
+                      age = calculateAge(parsedDate).toString(); // Calculate age
+                    } catch (e) {
+                      // Handle invalid date format
+                      print("Invalid date format: $e");
+                    }
                   });
-                }
-                else {}
-              },
-            )),
+                },
+              ),
+            ),
 
-              Container(
+            Container(
                margin:
                 const EdgeInsets.only(left: 20.0, right: 20.0, top: 20.0),
                 child: TextField(

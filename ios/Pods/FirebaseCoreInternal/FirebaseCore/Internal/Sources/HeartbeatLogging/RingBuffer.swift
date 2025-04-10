@@ -16,13 +16,13 @@ import Foundation
 
 /// A generic circular queue structure.
 struct RingBuffer<Element>: Sequence {
-  /// An array of heartbeats treated as a circular queue and intialized with a fixed capacity.
+  /// An array of heartbeats treated as a circular queue and initialized with a fixed capacity.
   private var circularQueue: [Element?]
   /// The current "tail" and insert point for the `circularQueue`.
   private var tailIndex: Array<Element?>.Index
 
   /// Error types for `RingBuffer` operations.
-  enum Error: LocalizedError {
+  enum Error: Swift.Error {
     case outOfBoundsPush(pushIndex: Array<Element?>.Index, endIndex: Array<Element?>.Index)
 
     var errorDescription: String {
@@ -41,7 +41,8 @@ struct RingBuffer<Element>: Sequence {
     tailIndex = circularQueue.startIndex
   }
 
-  /// Pushes an element to the back of the buffer, returning the element (`Element?`) that was overwritten.
+  /// Pushes an element to the back of the buffer, returning the element (`Element?`) that was
+  /// overwritten.
   /// - Parameter element: The element to push to the back of the buffer.
   /// - Returns: The element that was overwritten or `nil` if nothing was overwritten.
   /// - Complexity: O(1)
@@ -72,7 +73,8 @@ struct RingBuffer<Element>: Sequence {
     return replaced
   }
 
-  /// Pops an element from the back of the buffer, returning the element (`Element?`) that was popped.
+  /// Pops an element from the back of the buffer, returning the element (`Element?`) that was
+  /// popped.
   /// - Returns: The element that was popped or `nil` if there was no element to pop.
   /// - Complexity: O(1)
   @discardableResult

@@ -35,26 +35,27 @@
 
 static bool _isIosEncoderSupported [] =
 {
-     		true, // DEFAULT
-		true, // aacADTS
-		false, // opusOGG
-		true, // opusCAF
-		false, // MP3
-		false, // vorbisOGG
-		true, // pcm16
-		true, // pcm16WAV
-		false, // pcm16AIFF
-		true, // pcm16CAF
-		true, // flac
-		true, // aacMP4
+                true, // DEFAULT
+                true, // aacADTS
+                false, // opusOGG
+                true, // opusCAF
+                false, // MP3
+                false, // vorbisOGG
+                true, // pcm16
+                true, // pcm16WAV
+                false, // pcm16AIFF
+                true, // pcm16CAF
+                true, // flac
+                true, // aacMP4
                 false, // amrNB
                 false, // amrWB
                 
                 false, // pcm8
-                false, // pcmFloat32
+                true, // pcmFloat32
                 false, // pcmWebM
                 false, // opusWebM
                 false, // vorbisWebM
+                true, // pcmFloat32WAV
 
 };
 
@@ -79,6 +80,7 @@ static NSString* defaultExtensions [] =
           @"sound.webm", // pcmWebM
           @"sound_opus.webm", // opusWebM
           @"sound_vorbis.webm", // vorbisWebM
+          @"sound.wav", // pcmFloat32WAV
 
           
 
@@ -105,6 +107,7 @@ static AudioFormatID formats [] =
         , 0                             // pcmWebM
         , 0                             // opusWebM
         , 0                             // vorbisWebM
+        , kAudioFormatLinearPCM         // pcmFloat32WAV
 };
 
 
@@ -137,6 +140,7 @@ AudioRecInterface* audioRec;
         NSTimer* recorderTimer;
         double subscriptionDuration;
         NSString* m_path;
+
 }
 
 - (void)recordingData: (NSData*)data
@@ -145,9 +149,22 @@ AudioRecInterface* audioRec;
 }
 
 
+- (void)recordingDataFloat32: (NSMutableArray*)data
+{
+        [m_callBack recordingDataFloat32: data ];
+}
+
+
+- (void)recordingDataInt16: (NSMutableArray*)data
+{
+        [m_callBack recordingDataInt16: data ];
+}
+
+
 - (FlautoRecorder*)init: (NSObject<FlautoRecorderCallback>*) callback
 {
         m_callBack = callback;
+        
         return [super init];
 }
 
@@ -168,7 +185,6 @@ AudioRecInterface* audioRec;
         [self logDebug:  @"IOS:--> releaseFlautoRecorder"];
 
         [ self stop];
-        [m_callBack closeRecorderCompleted: true];
         [self logDebug:  @"IOS:<-- releaseFlautoRecorder"];
 
 }
@@ -196,32 +212,79 @@ AudioRecInterface* audioRec;
 - (bool)startRecorderCodec: (t_CODEC)codec
                 toPath: (NSString*)path
                 channels: (int)numChannels
+                interleaved: (BOOL)interleaved
                 sampleRate: (long)sampleRate
                 bitRate: (long)bitRate
+                bufferSize: (long)bufferSize
+                enableVoiceProcessing: (bool)enableVoiceProcessing
 {
+    AVAudioSession* audioSession = [AVAudioSession sharedInstance];
+    AVAudioSessionCategory category = [audioSession category];
+    if (category != AVAudioSessionCategoryPlayAndRecord)
+    {
+        NSError* outError;
+        if (! [audioSession setCategory: AVAudioSessionCategoryPlayAndRecord
+                       error: &outError])
+        {
+            return false;
+        }
+    }
+    
         NSMutableDictionary* audioSettings = [NSMutableDictionary dictionaryWithObjectsAndKeys:
                                  [NSNumber numberWithLong: sampleRate], AVSampleRateKey,
                                  [NSNumber numberWithInt: formats[codec] ], AVFormatIDKey,
                                  [NSNumber numberWithInt: numChannels ], AVNumberOfChannelsKey,
+                                 [NSNumber numberWithLong: bufferSize ], @"bufferSize",
+                                 [NSNumber numberWithBool: enableVoiceProcessing ], @"enableVoiceProcessing",
                          nil];
 
         // If bitrate is defined, we use it, otherwise use the OS default
         if(bitRate > 0)
         {
-                [audioSettings setValue:[NSNumber numberWithLong: bitRate]
-                    forKey:AVEncoderBitRateKey];
+                [audioSettings setValue: [NSNumber numberWithLong: bitRate]
+                    forKey: AVEncoderBitRateKey];
         }
+    
+        if(codec == pcmFloat32WAV || codec == pcmFloat32)
+        {
+                [audioSettings setValue: [NSNumber numberWithInt: 32]
+                    forKey: AVLinearPCMBitDepthKey];
+                [audioSettings setValue: [NSNumber numberWithBool: true]
+                    forKey: AVLinearPCMIsFloatKey];
+       }
+    
+        if(codec == pcm16WAV || codec == pcm16)
+        {
+                [audioSettings setValue: [NSNumber numberWithInt: 16]
+                    forKey: AVLinearPCMBitDepthKey];
+                [audioSettings setValue: [NSNumber numberWithBool: false]
+                    forKey: AVLinearPCMIsFloatKey];
+       }
+    
+        //if (!interleaved)
+        {
+            [audioSettings setValue: [NSNumber numberWithBool: !interleaved]
+                    forKey: AVLinearPCMIsNonInterleaved];
+        }
+
+    
  
         path = [self getpath: path];
         m_path = path;
 
-        if(codec == pcm16)
+        if(codec == pcm16 || codec == pcmFloat32)
         {
-                if (numChannels != 1)
-                {
-                                return false;
-                }
-                audioRec = new AudioRecorderEngine(codec, path, audioSettings, self);
+            try
+            {
+                audioRec = new AudioRecorderEngine(codec, path, audioSettings, bufferSize, enableVoiceProcessing, self );
+            } catch ( NSException* e)
+            {
+                return false;
+            }
+            if (audioRec == nil)
+            {
+                return false;
+            }
         } else
         {
                 audioRec = new avAudioRec(codec, path, audioSettings, self);
@@ -242,7 +305,8 @@ AudioRecInterface* audioRec;
           {
                 try {
                         audioRec -> stopRecorder();
-                } catch ( NSException* e) {
+                } catch ( NSException* e)
+                {
                 }
                 delete audioRec;
                 audioRec = nil;
@@ -349,7 +413,10 @@ AudioRecInterface* audioRec;
 
 - (void)updateRecorderProgress:(NSTimer*) atimer
 {
-        assert (recorderTimer == atimer);
+        if (recorderTimer != atimer || [self getStatus] == 0) // something bad
+        {
+                return;
+        }
         NSNumber* duration = audioRec ->recorderProgress();
         NSNumber * normalizedPeakLevel = audioRec ->dbPeakProgress();
         [m_callBack updateRecorderProgressDbPeakLevel: normalizedPeakLevel duration: duration];

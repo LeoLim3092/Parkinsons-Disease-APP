@@ -40,13 +40,14 @@ static bool _isIosDecoderSupported [] =
 		true, // pcm16CAF
 		true, // flac
 		true, // aacMP4
-                false, // amrNB
-                false, // amrWB
-                false, //pcm8,
-                false, //pcmFloat32,
-                false, // pcmWebM
-                false, // opusWebM
-                false, // vorbisWebM
+        false, // amrNB
+        false, // amrWB
+        false, //pcm8,
+        false, //pcmFloat32,
+        false, // pcmWebM
+        false, // opusWebM
+        false, // vorbisWebM
+        true, // pcmFloat32WAV
 
 
 };
@@ -60,30 +61,21 @@ static bool _isIosDecoderSupported [] =
         double subscriptionDuration;
         double latentVolume;
         double latentSpeed;
+        double latentPan;
         long latentSeek;
-        bool voiceProcessing;
-
+ 
 }
 
 - (FlautoPlayer*)init: (NSObject<FlautoPlayerCallback>*) callback
 {
         m_callBack = callback;
         latentVolume = -1.0;
+        latentPan = -2.0;
         latentSpeed = -1.0;
         latentSeek = -1;
         subscriptionDuration = 0;
         timer = nil;
         return [super init];
-}
-
-- (void)setVoiceProcessing: (bool) enabled
-{
-        voiceProcessing = enabled;
-}
-
-- (bool)isVoiceProcessingEnabled
-{
-        return voiceProcessing;
 }
 
 
@@ -109,7 +101,6 @@ static bool _isIosDecoderSupported [] =
         [self logDebug: @"IOS:--> releaseFlautoPlayer"];
 
         [ self stop];
-        [m_callBack closePlayerCompleted: YES];
         [self logDebug:  @"IOS:<-- releaseFlautoPlayer"];
 }
 
@@ -136,12 +127,13 @@ static bool _isIosDecoderSupported [] =
 
 }
 
-- (bool)startPlayerFromMicSampleRate: (long)sampleRate nbChannels: (int)nbChannels
+- (bool)startPlayerFromMicSampleRate: (long)sampleRate nbChannels: (int)nbChannels interleaved: (BOOL)interleaved bufferSize: (long)bufferSize enableVoiceProcessing: (bool)enableVoiceProcessing
 {
         [self logDebug:  @"IOS:--> startPlayerFromMicSampleRate"];
         [self stop]; // To start a fresh new playback
-        m_playerEngine = [[AudioEngineFromMic alloc] init: self ];
-        [m_playerEngine startPlayerFromURL: nil codec: (t_CODEC)0 channels: nbChannels sampleRate: sampleRate];
+        AudioEngineFromMic* engine = [[AudioEngineFromMic alloc] init: self ];
+        m_playerEngine = engine;
+        [engine startPlayerFromURL: nil codec: (t_CODEC)0 channels: nbChannels interleaved: (BOOL)interleaved sampleRate: sampleRate bufferSize: (long)bufferSize ];
         bool b = [m_playerEngine play];
         if (b)
         {
@@ -178,14 +170,16 @@ static bool _isIosDecoderSupported [] =
         fromURI: (NSString*)path
         fromDataBuffer: (NSData*)dataBuffer
         channels: (int)numChannels
+        interleaved: (BOOL)interleaved
         sampleRate: (long)sampleRate
+        bufferSize: (long)bufferSize
 {
         [self logDebug:  @"IOS:--> startPlayer"];
         bool b = FALSE;
         [self stop]; // To start a fresh new playback
 
-        if ( (path == nil ||  [path class] == [NSNull class] ) && codec == pcm16)
-                m_playerEngine = [[AudioEngine alloc] init: self ];
+    if ( (path == nil ||  [path class] == [NSNull class] ) && (codec == pcm16 || codec == pcmFloat32) ) // Play From Stream
+        m_playerEngine = [[AudioEngine alloc] init: self codec: codec channels: numChannels interleaved: interleaved sampleRate: sampleRate];
         else
                 m_playerEngine = [[AudioPlayerFlauto alloc]init: self];
         
@@ -211,7 +205,7 @@ static bool _isIosDecoderSupported [] =
         path = [self getpath: path];
         bool isRemote = false;
 
-        if (path != (id)[NSNull null])
+        if (path != (id)[NSNull null] && path != nil)
         {
                 NSURL* remoteUrl = [NSURL URLWithString: path];
                 NSURL* audioFileURL = [NSURL URLWithString:path];
@@ -253,11 +247,11 @@ static bool _isIosDecoderSupported [] =
 
                 } else
                 {
-                        [m_playerEngine startPlayerFromURL: audioFileURL codec: codec channels: numChannels sampleRate: sampleRate ];
+                        [m_playerEngine startPlayerFromURL: audioFileURL codec: codec          channels: numChannels      interleaved: interleaved       sampleRate: sampleRate       bufferSize: (long)bufferSize];
                 }
         } else
         {
-                [m_playerEngine startPlayerFromURL: nil codec: codec channels: numChannels sampleRate: sampleRate ];
+                [m_playerEngine startPlayerFromURL: nil codec: codec channels: numChannels interleaved: interleaved sampleRate: sampleRate bufferSize: (long)bufferSize];
         }
         b = [self play];
 
@@ -273,6 +267,9 @@ static bool _isIosDecoderSupported [] =
 
 - (bool) play
 {
+        if (latentPan>=-1){
+                [self setPan: latentPan];
+        }
         if (latentVolume >= 0)
                 [self setVolume: latentVolume fadeDuration: 0];
         if (latentSpeed >= 0)
@@ -288,12 +285,26 @@ static bool _isIosDecoderSupported [] =
 
 }
 
-- (void)needSomeFood: (int)ln
+- (void)needSomeFood: (int)ln // Called from the engine, not from the app
 {
         dispatch_async(dispatch_get_main_queue(),
         ^{
                 [self ->m_callBack needSomeFood: ln];
          });
+}
+- (void)audioPlayerDidFinishPlaying: (BOOL)flag
+{
+        dispatch_async(dispatch_get_main_queue(),
+        ^{
+                [self ->m_callBack audioPlayerDidFinishPlaying: flag];
+         });
+
+}
+
+
+- (void)nothingMoreToPlay
+{
+        
 }
 
 - (void)updateProgress: (NSTimer*)atimer
@@ -350,24 +361,6 @@ static bool _isIosDecoderSupported [] =
         }
         if ([self getStatus] == PLAYER_IS_PLAYING )
         {
-                  /*
-                  long position =   [m_playerEngine getPosition];
-                  long duration =   [m_playerEngine getDuration];
-                  if (duration - position < 200) // PATCH [LARPOUX]
-                  {
-                        [self logDebug:  @"IOS: !patch [LARPOUX]"];
-                        dispatch_async(dispatch_get_main_queue(),
-                        ^{
-                                [self stop];
-                                [self logDebug:  @"IOS:--> ^audioPlayerFinishedPlaying"];
-
-                                [self ->m_callBack  audioPlayerDidFinishPlaying: true];
-                                [self logDebug:  @"IOS:<-- ^audioPlayerFinishedPlaying"];
-                         });
-                        //return false;
-                  } else
-                  */
-
                         [m_playerEngine pause];
         }
         else
@@ -403,19 +396,17 @@ static bool _isIosDecoderSupported [] =
 
 
 
-- (int)feed:(NSData*)data
+- (int)feed:(NSArray*)data interleaved: (BOOL)interleaved
 {
 		try
 		{
-                        int r = [m_playerEngine feed: data];
-			return r;
+            int r = [m_playerEngine feed: data interleaved: interleaved];
+            return r;
 		} catch (NSException* e)
 		{
-                        return -1;
+            return -1;
   		}
-
 }
-
 
 
 
@@ -447,6 +438,19 @@ static bool _isIosDecoderSupported [] =
         {
         }
         [self logDebug: @"IOS:<-- setVolume"];
+}
+
+- (void)setPan:(double) pan // speed is between 0.0 and 1.0 to slow and 1.0 to n to accelearate
+{
+        [self logDebug:  @"IOS:--> setPan"];
+        latentPan = pan;
+        if (m_playerEngine )
+        {
+                [m_playerEngine setPan: pan ];
+        } else
+        {
+        }
+        [self logDebug: @"IOS:<-- setPan"];
 }
 
 
@@ -516,9 +520,10 @@ static bool _isIosDecoderSupported [] =
         [self logDebug:  @"IOS:--> @audioPlayerDidFinishPlaying"];
 
         dispatch_async(dispatch_get_main_queue(), ^{
-                [self stopTimer];
-                [ self ->m_playerEngine stop];
-                self ->m_playerEngine = nil;
+                // Whe don't stop the player. This is Flutter responsibility
+                //[self stopTimer];
+                //[ self ->m_playerEngine stop];
+                //self ->m_playerEngine = nil;
                 [self logDebug:  @"IOS:--> ^audioPlayerFinishedPlaying"];
 
                 [self ->m_callBack  audioPlayerDidFinishPlaying: true];

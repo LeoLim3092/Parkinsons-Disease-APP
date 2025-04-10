@@ -37,34 +37,39 @@ class _PaintThreePageState extends State<PaintThreePage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              TextButton(
-                onPressed: () {
-                  _controller.saveImage().then((value) => setState(() {
-                    _savedImage = value;
-                    if (value != null) {
-                      showUpload(value);
-                    }
-                  }));
-                },
-                child: const Text(
-                  '儲存圖片',
-                  style: TextStyle(color: Colors.black, fontSize: 28),
-                ),
-              ),
-              TextButton(
+              ElevatedButton(
                 onPressed: () {
                   _controller.reset();
                   setState(() {
                     _savedImage = null;
                   });
                 },
-                child: const Text(
-                  '清空',
-                  style: TextStyle(color: Colors.black, fontSize: 28),
+                style: ElevatedButton.styleFrom(
+                  primary: Colors.red, // Red color for '清空'
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  textStyle: const TextStyle(fontSize: 28),
                 ),
+                child: const Text('清空'),
+              ),
+              const SizedBox(width: 20), // Add spacing between the buttons
+              ElevatedButton(
+                onPressed: () {
+                  _controller.saveImage().then((value) => setState(() {
+                        _savedImage = value;
+                        if (value != null) {
+                          showUpload(value);
+                        }
+                      }));
+                },
+                style: ElevatedButton.styleFrom(
+                  primary: Colors.green, // Green color for '儲存圖片'
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  textStyle: const TextStyle(fontSize: 28),
+                ),
+                child: const Text('儲存圖片'),
               ),
             ],
-          )
+          ),
         ],
       ),
     );

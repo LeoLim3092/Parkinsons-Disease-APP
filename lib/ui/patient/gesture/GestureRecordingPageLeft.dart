@@ -6,11 +6,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:keep_screen_on/keep_screen_on.dart';
+import 'package:sensors_plus/sensors_plus.dart';
+
 import 'package:pd_app/api/UploadService.dart';
 import 'package:pd_app/model/Patient.dart';
-import 'package:pd_app/utils/TimeUtil.dart';
-import 'package:sensors_plus/sensors_plus.dart';
 import 'package:pd_app/prefs/UploadStatus.dart';
+import 'package:pd_app/ui/patient/gesture/GestureRecordingPageRight.dart';
+
+import 'package:pd_app/utils/UploadUtil.dart';
+import 'package:pd_app/utils/TimeUtil.dart';
 
 
 class GestureRecordingPageLeft extends StatefulWidget {
@@ -408,41 +412,22 @@ class _GestureRecordingPageLeftState extends State<GestureRecordingPageLeft> wit
         setState(() {});
       }
       if (file != null) {
-        showUpload(file.path);
-        // showInSnackBar('Video recorded to ${file.path}');
+        showUploadDialog(
+          context: context,
+          filePath: file.path,
+          uploadFunction: (filePath) => UploadService.uploadGestureRecording(
+            widget.patient.patientId ?? "",
+            filePath,
+            type,
+          ),
+          onSuccessNavigation: () => gotoGesturePageRight(widget.patient),
+          dialogTitle: "上傳",
+          dialogContent: "請問您是否要上傳此次錄影？",
+          cancelText: "取消",
+          uploadText: "上傳",
+        );
       }
     });
-  }
-
-  void showUpload(String path) async {
-    final uploadStatus = Provider.of<UploadStatus>(context, listen: false);
-    showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) {
-          return AlertDialog(title: const Text("上傳", style:
-              TextStyle(fontSize: 28)), content: const Text("請問您是否要上傳此次錄影", style:
-          TextStyle(fontSize: 28)), actions: <Widget>[
-            TextButton(
-              child: const Text("取消", style:
-              TextStyle(fontSize: 28)),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-            TextButton(
-              child: const Text("上傳", style:
-              TextStyle(fontSize: 28)),
-              onPressed: () async {
-                EasyLoading.show(status: '上傳中');
-                var response = await UploadService.uploadGestureRecording(widget.patient.patientId ?? "", path, type);
-                if (response.statusCode == 200) {
-                  uploadStatus.setUploadLHStatus(true);
-                }
-                EasyLoading.dismiss();
-                Navigator.of(context).pop(true);
-              },
-            ),
-          ]);
-        });
   }
 
   Future<void> startVideoRecording(String type) async {
@@ -484,5 +469,14 @@ class _GestureRecordingPageLeftState extends State<GestureRecordingPageLeft> wit
   void _showCameraException(CameraException e) {
     _logError(e.code, e.description);
     showInSnackBar('Error: ${e.code}\n${e.description}');
+  }
+
+  void gotoGesturePageRight(Patient patient) async {
+    final cameras = await availableCameras();
+    Navigator.of(context).push(MaterialPageRoute(
+        builder: (context) => GestureRecordingPageRight(
+          cameras: cameras,
+          patient: patient,
+        )));
   }
 }

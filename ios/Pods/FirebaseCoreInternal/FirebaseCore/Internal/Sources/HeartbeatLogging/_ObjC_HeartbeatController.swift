@@ -30,7 +30,8 @@ public class _ObjC_HeartbeatController: NSObject {
   /// Asynchronously logs a new heartbeat, if needed.
   ///
   /// - Note: This API is thread-safe.
-  /// - Parameter agent: The string agent (i.e. Firebase User Agent) to associate the logged heartbeat with.
+  /// - Parameter agent: The string agent (i.e. Firebase User Agent) to associate the logged
+  /// heartbeat with.
   public func log(_ agent: String) {
     heartbeatController.log(agent)
   }
@@ -42,6 +43,18 @@ public class _ObjC_HeartbeatController: NSObject {
   public func flush() -> _ObjC_HeartbeatsPayload {
     let heartbeatsPayload = heartbeatController.flush()
     return _ObjC_HeartbeatsPayload(heartbeatsPayload)
+  }
+
+  /// Asynchronously flushes heartbeats from storage into a heartbeats payload.
+  ///
+  /// - Note: This API is thread-safe.
+  /// - Returns: A heartbeats payload for the flushed heartbeat(s).
+  public func flushAsync(completionHandler: @escaping @Sendable (_ObjC_HeartbeatsPayload) -> Void) {
+    // TODO: When minimum version moves to iOS 13.0, restore the async version
+    // removed in #13952.
+    heartbeatController.flushAsync { heartbeatsPayload in
+      completionHandler(_ObjC_HeartbeatsPayload(heartbeatsPayload))
+    }
   }
 
   /// Synchronously flushes the heartbeat for today.

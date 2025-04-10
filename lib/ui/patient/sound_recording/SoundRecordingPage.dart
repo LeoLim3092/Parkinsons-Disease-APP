@@ -1,18 +1,21 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:provider/provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter/material.dart';
 import 'package:audio_session/audio_session.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_sound/flutter_sound.dart';
 import 'package:keep_screen_on/keep_screen_on.dart';
 import 'package:path_provider/path_provider.dart';
+
 import 'package:pd_app/api/UploadService.dart';
 import 'package:pd_app/model/Patient.dart';
-import 'package:pd_app/utils/TimeUtil.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:pd_app/prefs/UploadStatus.dart';
-import 'package:provider/provider.dart';
+import 'package:pd_app/ui/patient/sound_recording/SoundRecordingFreeTalkPage.dart';
 
+import 'package:pd_app/utils/UploadUtil.dart';
+import 'package:pd_app/utils/TimeUtil.dart';
 
 enum RecordPlayState {
   record,
@@ -198,40 +201,22 @@ class _SoundRecordingPageState extends State<SoundRecordingPage> {
       timer?.cancel();
       time = 0;
       setState(() {});
-      return showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) {
-            return AlertDialog(
-                title: Text("上傳", style:
-                TextStyle(fontSize: 28)),
-                content: const Text("請問您是否要上傳此次錄音?", style:
-                TextStyle(fontSize: 28)),
-                actions: <Widget>[
-                  TextButton(
-                    child: Text("取消", style:
-                    TextStyle(fontSize: 28)),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                  TextButton(
-                    child: Text("上傳", style:
-                    TextStyle(fontSize: 28)),
-                    onPressed: () async {
-                      EasyLoading.show(status: '上傳中');
-                      var file = File(path);
-                      var fileSize = file.lengthSync();
-                      print("file size: $fileSize bytes");
-                      var response = await UploadService.uploadSoundRecording(widget.patient.patientId ?? "", path);
-                      if (response.statusCode == 200) {
-                          uploadStatus.setUploadSoundStatus(true);
-                          print(uploadStatus.isUploadSoundSuccessful);
-                      }
-                      EasyLoading.dismiss();
-                      Navigator.of(context).pop(true);
-                    },
-                  ),
-                ]);
-          });
+
+      showUploadDialog(
+        context: context,
+        filePath: path,
+        uploadFunction: (filePath) => UploadService.uploadSoundRecording(
+          widget.patient.patientId ?? "",
+          filePath,
+        ),
+        onSuccessNavigation: () => gotoSoundRecordingFreeTalkPage(widget.patient),
+        dialogTitle: "上傳",
+        dialogContent: "請問您是否要上傳此次錄音？",
+        cancelText: "取消",
+        uploadText: "上傳",
+      );
+
+      return null;
     }
 
     if (_myRecorder?.isRecording == true) {
@@ -239,5 +224,9 @@ class _SoundRecordingPageState extends State<SoundRecordingPage> {
     } else {
       record();
     }
+  }
+
+  void gotoSoundRecordingFreeTalkPage(Patient patient) {
+    Navigator.of(context).push(MaterialPageRoute(builder: (context) => SoundRecordingFreeTalkPage(patient: patient)));
   }
 }

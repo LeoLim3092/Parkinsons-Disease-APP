@@ -29,6 +29,7 @@
 
 
 
+
 @protocol FlautoPlayerCallback <NSObject>
 
 - (void)openPlayerCompleted: (bool)success;
@@ -57,8 +58,6 @@
 
 - (FlautoPlayer*)init: (NSObject<FlautoPlayerCallback>*) callback;
            
-- (void)setVoiceProcessing: (bool) enabled;
-- (bool)isVoiceProcessingEnabled;
 - (t_PLAYER_STATE)getPlayerState;
 - (bool)isDecoderSupported: (t_CODEC)codec ;
 - (void)releaseFlautoPlayer;
@@ -66,19 +65,23 @@
         fromURI: (NSString*)path
         fromDataBuffer: (NSData*)dataBuffer
         channels: (int)numChannels
+        interleaved: (BOOL)interleaved
         sampleRate: (long)sampleRate
+        bufferSize: (long)bufferSize
         ;
-- (bool)startPlayerFromMicSampleRate: (long)sampleRate nbChannels: (int)nbChannels;
+- (bool)startPlayerFromMicSampleRate: (long)sampleRate nbChannels: (int)nbChannels interleaved: (BOOL)interleaved bufferSize: (long)bufferSize enableVoiceProcessing: (bool)enableVoiceProcessing;
 - (void)stopPlayer;
 - (bool)pausePlayer;
 - (bool)resumePlayer;
 - (void)seekToPlayer: (long)time;
 - (void)setSubscriptionDuration: (long)call ;
 - (void)setVolume: (double)volume fadeDuration: (NSTimeInterval) fadeDuration;
+- (void)setPan: (double)pan ;
 - (void)setSpeed: (double)speed ;
 - (NSDictionary*)getProgress ;
-- (int)feed: (NSData*)data;
+- (int)feed: (NSArray*)data interleaved: (BOOL)interleaved;
 - (void)needSomeFood: (int) ln;
+- (void)audioPlayerDidFinishPlaying: (BOOL)flag;
 - (t_PLAYER_STATE)getStatus;
 - (void)startTimer;
 - (void)stopTimer;

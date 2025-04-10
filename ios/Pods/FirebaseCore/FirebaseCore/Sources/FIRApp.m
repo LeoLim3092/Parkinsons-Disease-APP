@@ -38,7 +38,8 @@
 #import "FirebaseCore/Extension/FIRHeartbeatLogger.h"
 #import "FirebaseCore/Extension/FIRLibrary.h"
 #import "FirebaseCore/Extension/FIRLogger.h"
-#import "FirebaseCore/Extension/FIROptionsInternal.h"
+#import "FirebaseCore/Sources/FIROptionsInternal.h"
+#import "FirebaseCore/Sources/Public/FirebaseCore/FIROptions.h"
 #import "FirebaseCore/Sources/Public/FirebaseCore/FIRVersion.h"
 
 #import <GoogleUtilities/GULAppEnvironmentUtil.h>
@@ -79,19 +80,10 @@ NSString *const FIRAuthStateDidChangeInternalNotificationUIDKey =
  */
 NSString *const kFirebaseCoreErrorDomain = @"com.firebase.core";
 
-/** The NSUserDefaults suite name for FirebaseCore, for those storage locations that use it. */
-NSString *const kFirebaseCoreDefaultsSuiteName = @"com.firebase.core";
-
 /**
  * The URL to download plist files.
  */
 static NSString *const kPlistURL = @"https://console.firebase.google.com/";
-
-/**
- * An array of all classes that registered as `FIRCoreConfigurable` in order to receive lifecycle
- * events from Core.
- */
-static NSMutableArray<Class<FIRLibrary>> *sRegisteredAsConfigurable;
 
 @interface FIRApp ()
 
@@ -112,6 +104,9 @@ static FIRApp *sDefaultApp;
 + (void)configure {
   FIROptions *options = [FIROptions defaultOptions];
   if (!options) {
+#if DEBUG
+    [self findMisnamedGoogleServiceInfoPlist];
+#endif  // DEBUG
     [NSException raise:kFirebaseCoreErrorDomain
                 format:@"`FirebaseApp.configure()` could not find "
                        @"a valid GoogleService-Info.plist in your project. Please download one "
@@ -238,7 +233,8 @@ static FIRApp *sDefaultApp;
               @"application initialization. This can be done in "
               @"in the App Delegate's application(_:didFinishLaunchingWithOptions:)` "
               @"(or the `@main` struct's initializer in SwiftUI). "
-              @"Read more: https://goo.gl/ctyzm8.");
+              @"Read more: "
+              @"https://firebase.google.com/docs/ios/setup#initialize_firebase_in_your_app");
   return nil;
 }
 
@@ -450,14 +446,6 @@ static FIRApp *sDefaultApp;
   [[NSNotificationCenter defaultCenter] postNotificationName:kFIRAppReadyToConfigureSDKNotification
                                                       object:self
                                                     userInfo:appInfoDict];
-
-  // This is the new way of sending information to SDKs.
-  // TODO: Do we want this on a background thread, maybe?
-  @synchronized(self) {
-    for (Class<FIRLibrary> library in sRegisteredAsConfigurable) {
-      [library configureWithApp:app];
-    }
-  }
 }
 
 + (NSError *)errorForMissingOptions {
@@ -522,15 +510,6 @@ static FIRApp *sDefaultApp;
   }
 
   [FIRComponentContainer registerAsComponentRegistrant:library];
-  if ([(Class)library respondsToSelector:@selector(configureWithApp:)]) {
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-      sRegisteredAsConfigurable = [[NSMutableArray alloc] init];
-    });
-    @synchronized(self) {
-      [sRegisteredAsConfigurable addObject:library];
-    }
-  }
   [self registerLibrary:name withVersion:version];
 }
 
@@ -570,10 +549,11 @@ static FIRApp *sDefaultApp;
 #pragma mark - private - App ID Validation
 
 /**
- * Validates the format and fingerprint of the app ID contained in GOOGLE_APP_ID in the plist file.
- * This is the main method for validating app ID.
+ * Validates the format of app ID and its included bundle ID hash contained in GOOGLE_APP_ID in the
+ * plist file. This is the main method for validating app ID.
  *
- * @return YES if the app ID fulfills the expected format and fingerprint, NO otherwise.
+ * @return YES if the app ID fulfills the expected format and contains a hashed bundle ID, NO
+ * otherwise.
  */
 - (BOOL)isAppIDValid {
   NSString *appID = _options.googleAppID;
@@ -594,7 +574,7 @@ static FIRApp *sDefaultApp;
 
 + (BOOL)validateAppID:(NSString *)appID {
   // Failing validation only occurs when we are sure we are looking at a V2 app ID and it does not
-  // have a valid fingerprint, otherwise we just warn about the potential issue.
+  // have a valid hashed bundle ID, otherwise we just warn about the potential issue.
   if (!appID.length) {
     return NO;
   }
@@ -624,7 +604,7 @@ static FIRApp *sDefaultApp;
     return NO;
   }
 
-  if (![self validateAppIDFingerprint:appID withVersion:appIDVersion]) {
+  if (![self validateBundleIDHashWithinAppID:appID forVersion:appIDVersion]) {
     return NO;
   }
 
@@ -640,14 +620,14 @@ static FIRApp *sDefaultApp;
  * The version must end in ":".
  *
  * For v1 app ids the format is expected to be
- * '<version #>:<project number>:ios:<fingerprint of bundle id>'.
+ * '<version #>:<project number>:ios:<hashed bundle id>'.
  *
  * This method does not verify that the contents of the app id are correct, just that they fulfill
  * the expected format.
  *
  * @param appID Contents of GOOGLE_APP_ID from the plist file.
  * @param version Indicates what version of the app id format this string should be.
- * @return YES if provided string fufills the expected format, NO otherwise.
+ * @return YES if provided string fulfills the expected format, NO otherwise.
  */
 + (BOOL)validateAppIDFormat:(NSString *)appID withVersion:(NSString *)version {
   if (!appID.length || !version.length) {
@@ -658,21 +638,21 @@ static FIRApp *sDefaultApp;
   stringScanner.charactersToBeSkipped = nil;
 
   // Skip version part
-  // '*<version #>*:<project number>:ios:<fingerprint of bundle id>'
+  // '*<version #>*:<project number>:ios:<hashed bundle id>'
   if (![stringScanner scanString:version intoString:NULL]) {
     // The version part is missing or mismatched
     return NO;
   }
 
   // Validate version part (see part between '*' symbols below)
-  // '<version #>*:*<project number>:ios:<fingerprint of bundle id>'
+  // '<version #>*:*<project number>:ios:<hashed bundle id>'
   if (![stringScanner scanString:@":" intoString:NULL]) {
     // appIDVersion must be separated by ":"
     return NO;
   }
 
   // Validate version part (see part between '*' symbols below)
-  // '<version #>:*<project number>*:ios:<fingerprint of bundle id>'.
+  // '<version #>:*<project number>*:ios:<hashed bundle id>'.
   NSInteger projectNumber = NSNotFound;
   if (![stringScanner scanInteger:&projectNumber]) {
     // NO project number found.
@@ -680,14 +660,14 @@ static FIRApp *sDefaultApp;
   }
 
   // Validate version part (see part between '*' symbols below)
-  // '<version #>:<project number>*:*ios:<fingerprint of bundle id>'.
+  // '<version #>:<project number>*:*ios:<hashed bundle id>'.
   if (![stringScanner scanString:@":" intoString:NULL]) {
     // The project number must be separated by ":"
     return NO;
   }
 
   // Validate version part (see part between '*' symbols below)
-  // '<version #>:<project number>:*ios*:<fingerprint of bundle id>'.
+  // '<version #>:<project number>:*ios*:<hashed bundle id>'.
   NSString *platform;
   if (![stringScanner scanUpToString:@":" intoString:&platform]) {
     return NO;
@@ -699,22 +679,22 @@ static FIRApp *sDefaultApp;
   }
 
   // Validate version part (see part between '*' symbols below)
-  // '<version #>:<project number>:ios*:*<fingerprint of bundle id>'.
+  // '<version #>:<project number>:ios*:*<hashed bundle id>'.
   if (![stringScanner scanString:@":" intoString:NULL]) {
     // The platform must be separated by ":"
     return NO;
   }
 
   // Validate version part (see part between '*' symbols below)
-  // '<version #>:<project number>:ios:*<fingerprint of bundle id>*'.
-  unsigned long long fingerprint = NSNotFound;
-  if (![stringScanner scanHexLongLong:&fingerprint]) {
-    // Fingerprint part is missing
+  // '<version #>:<project number>:ios:*<hashed bundle id>*'.
+  unsigned long long bundleIDHash = NSNotFound;
+  if (![stringScanner scanHexLongLong:&bundleIDHash]) {
+    // Hashed bundleID part is missing
     return NO;
   }
 
   if (!stringScanner.isAtEnd) {
-    // There are not allowed characters in the fingerprint part
+    // There are not allowed characters in the hashed bundle ID part
     return NO;
   }
 
@@ -722,34 +702,34 @@ static FIRApp *sDefaultApp;
 }
 
 /**
- * Validates that the fingerprint of the app ID string is what is expected based on the supplied
- * version.
+ * Validates that the hashed bundle ID included in the app ID string is what is expected based on
+ * the supplied version.
  *
  * Note that the v1 hash algorithm is not permitted on the client and cannot be fully validated.
  *
  * @param appID Contents of GOOGLE_APP_ID from the plist file.
  * @param version Indicates what version of the app id format this string should be.
- * @return YES if provided string fufills the expected fingerprint and the version is known, NO
- *         otherwise.
+ * @return YES if provided string fulfills the expected hashed bundle ID and the version is known,
+ *         NO otherwise.
  */
-+ (BOOL)validateAppIDFingerprint:(NSString *)appID withVersion:(NSString *)version {
-  // Extract the supplied fingerprint from the supplied app ID.
-  // This assumes the app ID format is the same for all known versions below. If the app ID format
-  // changes in future versions, the tokenizing of the app ID format will need to take into account
-  // the version of the app ID.
++ (BOOL)validateBundleIDHashWithinAppID:(NSString *)appID forVersion:(NSString *)version {
+  // Extract the hashed bundle ID from the given app ID.
+  // This assumes the app ID format is the same for all known versions below.
+  // If the app ID format changes in future versions, the tokenizing of the app
+  // ID format will need to take into account the version of the app ID.
   NSArray *components = [appID componentsSeparatedByString:@":"];
   if (components.count != 4) {
     return NO;
   }
 
-  NSString *suppliedFingerprintString = components[3];
-  if (!suppliedFingerprintString.length) {
+  NSString *suppliedBundleIDHashString = components[3];
+  if (!suppliedBundleIDHashString.length) {
     return NO;
   }
 
-  uint64_t suppliedFingerprint;
-  NSScanner *scanner = [NSScanner scannerWithString:suppliedFingerprintString];
-  if (![scanner scanHexLongLong:&suppliedFingerprint]) {
+  uint64_t suppliedBundleIDHash;
+  NSScanner *scanner = [NSScanner scannerWithString:suppliedBundleIDHashString];
+  if (![scanner scanHexLongLong:&suppliedBundleIDHash]) {
     return NO;
   }
 
@@ -821,10 +801,10 @@ static FIRApp *sDefaultApp;
   SEL componentsToRegisterSEL = @selector(componentsToRegister);
   // Dictionary of class names that conform to `FIRLibrary` and their user agents. These should only
   // be SDKs that are written in Swift but still visible to ObjC.
+  // This is only necessary for products that need to do work at launch during configuration.
   NSDictionary<NSString *, NSString *> *swiftComponents = @{
     @"FIRSessions" : @"fire-ses",
-    @"FIRFunctionsComponent" : @"fire-fun",
-    @"FIRStorageComponent" : @"fire-str",
+    @"FIRAuthComponent" : @"fire-auth",
   };
   for (NSString *className in swiftComponents.allKeys) {
     Class klass = NSClassFromString(className);
@@ -839,11 +819,27 @@ static FIRApp *sDefaultApp;
     @"FIRCombineFirestoreLibrary" : @"comb-firestore",
     @"FIRCombineFunctionsLibrary" : @"comb-functions",
     @"FIRCombineStorageLibrary" : @"comb-storage",
+    @"FIRFunctions" : @"fire-fun",
+    @"FIRStorage" : @"fire-str",
+    @"FIRVertexAIComponent" : @"fire-vertex",
+    @"FIRDataConnectComponent" : @"fire-dc",
   };
   for (NSString *className in swiftLibraries.allKeys) {
     Class klass = NSClassFromString(className);
     if (klass) {
-      [FIRApp registerLibrary:swiftLibraries[className] withVersion:FIRFirebaseVersion()];
+      NSString *version = FIRFirebaseVersion();
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wundeclared-selector"
+      SEL sdkVersionSelector = @selector(sdkVersion);
+#pragma clang diagnostic pop
+      if ([klass respondsToSelector:sdkVersionSelector]) {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Warc-performSelector-leaks"
+        NSString *sdkVersion = (NSString *)[klass performSelector:sdkVersionSelector];
+        if (sdkVersion) version = sdkVersion;
+#pragma clang diagnostic pop
+      }
+      [FIRApp registerLibrary:swiftLibraries[className] withVersion:version];
     }
   }
 }
@@ -851,7 +847,7 @@ static FIRApp *sDefaultApp;
 #pragma mark - App Life Cycle
 
 - (void)subscribeForAppDidBecomeActiveNotifications {
-#if TARGET_OS_IOS || TARGET_OS_TV
+#if TARGET_OS_IOS || TARGET_OS_TV || TARGET_OS_VISION
   NSNotificationName notificationName = UIApplicationDidBecomeActiveNotification;
 #elif TARGET_OS_OSX
   NSNotificationName notificationName = NSApplicationDidBecomeActiveNotification;
@@ -876,8 +872,39 @@ static FIRApp *sDefaultApp;
 
 - (void)appDidBecomeActive:(NSNotification *)notification {
   if ([self isDataCollectionDefaultEnabled]) {
+    // If changing the below line, consult with the Games team to ensure they
+    // are not negatively impacted. For more details, see
+    // go/firebase-game-sdk-user-agent-register-timing.
     [self.heartbeatLogger log];
   }
 }
+
+#if DEBUG
++ (void)findMisnamedGoogleServiceInfoPlist {
+  for (NSBundle *bundle in [NSBundle allBundles]) {
+    // Not recursive, but we're looking for misnames, not people accidentally
+    // hiding their config file in a subdirectory of their bundle.
+    NSArray *plistPaths = [bundle pathsForResourcesOfType:@"plist" inDirectory:nil];
+    for (NSString *path in plistPaths) {
+      @autoreleasepool {
+        NSDictionary<NSString *, id> *contents = [NSDictionary dictionaryWithContentsOfFile:path];
+        if (contents == nil) {
+          continue;
+        }
+
+        NSString *projectID = contents[@"PROJECT_ID"];
+        if (projectID != nil) {
+          [NSException raise:kFirebaseCoreErrorDomain
+                      format:@"`FirebaseApp.configure()` could not find the default "
+                             @"configuration plist in your project, but did find one at "
+                             @"%@. Please rename this file to GoogleService-Info.plist to "
+                             @"use it as the default configuration.",
+                             path];
+        }
+      }
+    }
+  }
+}
+#endif  // DEBUG
 
 @end

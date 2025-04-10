@@ -18,7 +18,7 @@ echo "mkdir -p ${CONFIGURATION_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}"
 mkdir -p "${CONFIGURATION_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}"
 
 COCOAPODS_PARALLEL_CODE_SIGN="${COCOAPODS_PARALLEL_CODE_SIGN:-false}"
-SWIFT_STDLIB_PATH="${DT_TOOLCHAIN_DIR}/usr/lib/swift/${PLATFORM_NAME}"
+SWIFT_STDLIB_PATH="${TOOLCHAIN_DIR}/usr/lib/swift/${PLATFORM_NAME}"
 BCSYMBOLMAP_DIR="BCSymbolMaps"
 
 
@@ -41,7 +41,7 @@ install_framework()
 
   if [ -L "${source}" ]; then
     echo "Symlinked..."
-    source="$(readlink "${source}")"
+    source="$(readlink -f "${source}")"
   fi
 
   if [ -d "${source}/${BCSYMBOLMAP_DIR}" ]; then
@@ -183,17 +183,17 @@ if [[ "$CONFIGURATION" == "Debug" ]]; then
   install_framework "${BUILT_PRODUCTS_DIR}/GTMSessionFetcher/GTMSessionFetcher.framework"
   install_framework "${BUILT_PRODUCTS_DIR}/GoogleSignIn/GoogleSignIn.framework"
   install_framework "${BUILT_PRODUCTS_DIR}/GoogleUtilities/GoogleUtilities.framework"
-  install_framework "${BUILT_PRODUCTS_DIR}/PromisesObjC/FBLPromises.framework"
   install_framework "${BUILT_PRODUCTS_DIR}/audio_session/audio_session.framework"
   install_framework "${BUILT_PRODUCTS_DIR}/camera_avfoundation/camera_avfoundation.framework"
   install_framework "${BUILT_PRODUCTS_DIR}/flutter_native_splash/flutter_native_splash.framework"
   install_framework "${BUILT_PRODUCTS_DIR}/flutter_sound_core/flutter_sound_core.framework"
   install_framework "${BUILT_PRODUCTS_DIR}/keep_screen_on/keep_screen_on.framework"
-  install_framework "${BUILT_PRODUCTS_DIR}/path_provider_ios/path_provider_ios.framework"
+  install_framework "${BUILT_PRODUCTS_DIR}/package_info_plus/package_info_plus.framework"
+  install_framework "${BUILT_PRODUCTS_DIR}/path_provider_foundation/path_provider_foundation.framework"
   install_framework "${BUILT_PRODUCTS_DIR}/sensors_plus/sensors_plus.framework"
-  install_framework "${BUILT_PRODUCTS_DIR}/shared_preferences_ios/shared_preferences_ios.framework"
+  install_framework "${BUILT_PRODUCTS_DIR}/shared_preferences_foundation/shared_preferences_foundation.framework"
   install_framework "${BUILT_PRODUCTS_DIR}/video_player_avfoundation/video_player_avfoundation.framework"
-  install_framework "${BUILT_PRODUCTS_DIR}/wakelock/wakelock.framework"
+  install_framework "${BUILT_PRODUCTS_DIR}/wakelock_plus/wakelock_plus.framework"
 fi
 if [[ "$CONFIGURATION" == "Profile" ]]; then
   install_framework "${BUILT_PRODUCTS_DIR}/AppAuth/AppAuth.framework"
@@ -203,17 +203,17 @@ if [[ "$CONFIGURATION" == "Profile" ]]; then
   install_framework "${BUILT_PRODUCTS_DIR}/GTMSessionFetcher/GTMSessionFetcher.framework"
   install_framework "${BUILT_PRODUCTS_DIR}/GoogleSignIn/GoogleSignIn.framework"
   install_framework "${BUILT_PRODUCTS_DIR}/GoogleUtilities/GoogleUtilities.framework"
-  install_framework "${BUILT_PRODUCTS_DIR}/PromisesObjC/FBLPromises.framework"
   install_framework "${BUILT_PRODUCTS_DIR}/audio_session/audio_session.framework"
   install_framework "${BUILT_PRODUCTS_DIR}/camera_avfoundation/camera_avfoundation.framework"
   install_framework "${BUILT_PRODUCTS_DIR}/flutter_native_splash/flutter_native_splash.framework"
   install_framework "${BUILT_PRODUCTS_DIR}/flutter_sound_core/flutter_sound_core.framework"
   install_framework "${BUILT_PRODUCTS_DIR}/keep_screen_on/keep_screen_on.framework"
-  install_framework "${BUILT_PRODUCTS_DIR}/path_provider_ios/path_provider_ios.framework"
+  install_framework "${BUILT_PRODUCTS_DIR}/package_info_plus/package_info_plus.framework"
+  install_framework "${BUILT_PRODUCTS_DIR}/path_provider_foundation/path_provider_foundation.framework"
   install_framework "${BUILT_PRODUCTS_DIR}/sensors_plus/sensors_plus.framework"
-  install_framework "${BUILT_PRODUCTS_DIR}/shared_preferences_ios/shared_preferences_ios.framework"
+  install_framework "${BUILT_PRODUCTS_DIR}/shared_preferences_foundation/shared_preferences_foundation.framework"
   install_framework "${BUILT_PRODUCTS_DIR}/video_player_avfoundation/video_player_avfoundation.framework"
-  install_framework "${BUILT_PRODUCTS_DIR}/wakelock/wakelock.framework"
+  install_framework "${BUILT_PRODUCTS_DIR}/wakelock_plus/wakelock_plus.framework"
 fi
 if [[ "$CONFIGURATION" == "Release" ]]; then
   install_framework "${BUILT_PRODUCTS_DIR}/AppAuth/AppAuth.framework"
@@ -223,17 +223,17 @@ if [[ "$CONFIGURATION" == "Release" ]]; then
   install_framework "${BUILT_PRODUCTS_DIR}/GTMSessionFetcher/GTMSessionFetcher.framework"
   install_framework "${BUILT_PRODUCTS_DIR}/GoogleSignIn/GoogleSignIn.framework"
   install_framework "${BUILT_PRODUCTS_DIR}/GoogleUtilities/GoogleUtilities.framework"
-  install_framework "${BUILT_PRODUCTS_DIR}/PromisesObjC/FBLPromises.framework"
   install_framework "${BUILT_PRODUCTS_DIR}/audio_session/audio_session.framework"
   install_framework "${BUILT_PRODUCTS_DIR}/camera_avfoundation/camera_avfoundation.framework"
   install_framework "${BUILT_PRODUCTS_DIR}/flutter_native_splash/flutter_native_splash.framework"
   install_framework "${BUILT_PRODUCTS_DIR}/flutter_sound_core/flutter_sound_core.framework"
   install_framework "${BUILT_PRODUCTS_DIR}/keep_screen_on/keep_screen_on.framework"
-  install_framework "${BUILT_PRODUCTS_DIR}/path_provider_ios/path_provider_ios.framework"
+  install_framework "${BUILT_PRODUCTS_DIR}/package_info_plus/package_info_plus.framework"
+  install_framework "${BUILT_PRODUCTS_DIR}/path_provider_foundation/path_provider_foundation.framework"
   install_framework "${BUILT_PRODUCTS_DIR}/sensors_plus/sensors_plus.framework"
-  install_framework "${BUILT_PRODUCTS_DIR}/shared_preferences_ios/shared_preferences_ios.framework"
+  install_framework "${BUILT_PRODUCTS_DIR}/shared_preferences_foundation/shared_preferences_foundation.framework"
   install_framework "${BUILT_PRODUCTS_DIR}/video_player_avfoundation/video_player_avfoundation.framework"
-  install_framework "${BUILT_PRODUCTS_DIR}/wakelock/wakelock.framework"
+  install_framework "${BUILT_PRODUCTS_DIR}/wakelock_plus/wakelock_plus.framework"
 fi
 if [ "${COCOAPODS_PARALLEL_CODE_SIGN}" == "true" ]; then
   wait

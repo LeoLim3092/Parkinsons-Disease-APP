@@ -33,13 +33,14 @@
 
 @protocol FlautoRecorderCallback <NSObject>
 - (void)openRecorderCompleted: (bool)success;
-- (void)closeRecorderCompleted: (bool)success;
 - (void)startRecorderCompleted: (bool)success;
 - (void)stopRecorderCompleted: (NSString*)path success:(bool)success;
 - (void)resumeRecorderCompleted: (bool)success;
 - (void)pauseRecorderCompleted: (bool)success;
 - (void)updateRecorderProgressDbPeakLevel: normalizedPeakLevel duration: duration;
 - (void)recordingData: (NSData*)data;
+- (void)recordingDataFloat32: (NSArray*)data;
+- (void)recordingDataInt16: (NSArray*)data;
 - (void)log: (t_LOG_LEVEL)level msg: (NSString*)msg;
 @end
 
@@ -56,9 +57,12 @@
 - (bool)startRecorderCodec: (t_CODEC)codec
                 toPath: (NSString*)path
                 channels: (int)numChannels
+                interleaved: (BOOL)interleaved
                 sampleRate: (long)sampleRate
-                bitRate: (long)bitRate;
-                
+                bitRate: (long)bitRate
+                bufferSize: (long)bufferSize
+                enableVoiceProcessing: (bool)enableVoiceProcessing;
+
 - (void)stopRecorder;
 - (void)setSubscriptionDuration: (long)millisec;
 - (void)pauseRecorder;
@@ -66,6 +70,8 @@
 - (bool)deleteRecord: (NSString*)path;
 - (NSString*)getRecordURL: (NSString*)path;
 - (void)recordingData: (NSData*)data;
+- (void)recordingDataFloat32: (NSArray*)data;
+- (void)recordingDataInt16: (NSArray*)data;
 - (int)getStatus;
 - (void)logDebug: (NSString*)msg;
 
