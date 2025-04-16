@@ -422,7 +422,7 @@ class _GestureRecordingPageRightState extends State<GestureRecordingPageRight> w
           ),
           onSuccessNavigation: () => gotoSoundRecordingPage(widget.patient),
           dialogTitle: "上傳",
-          dialogContent: "請問您是否要上傳此次錄影？",
+          dialogContent: "請問您是否要上傳此次右手錄影？",
           cancelText: "取消",
           uploadText: "上傳",
         );
@@ -471,7 +471,7 @@ class _GestureRecordingPageRightState extends State<GestureRecordingPageRight> w
     showInSnackBar('Error: ${e.code}\n${e.description}');
   }
 
-  void gotoSoundRecordingFreeTalkPage(Patient patient) {
-    Navigator.of(context).push(MaterialPageRoute(builder: (context) => SoundRecordingFreeTalkPage(patient: patient)));
+  void gotoSoundRecordingPage(Patient patient) {
+    Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => SoundRecordingPage(patient: patient)));
   }
 }

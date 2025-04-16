@@ -422,7 +422,7 @@ class _GestureRecordingPageLeftState extends State<GestureRecordingPageLeft> wit
           ),
           onSuccessNavigation: () => gotoGesturePageRight(widget.patient),
           dialogTitle: "上傳",
-          dialogContent: "請問您是否要上傳此次錄影？",
+          dialogContent: "請問您是否要上傳此左手錄影？",
           cancelText: "取消",
           uploadText: "上傳",
         );
@@ -473,7 +473,7 @@ class _GestureRecordingPageLeftState extends State<GestureRecordingPageLeft> wit
 
   void gotoGesturePageRight(Patient patient) async {
     final cameras = await availableCameras();
-    Navigator.of(context).push(MaterialPageRoute(
+    Navigator.of(context).pushReplacement(MaterialPageRoute(
         builder: (context) => GestureRecordingPageRight(
           cameras: cameras,
           patient: patient,

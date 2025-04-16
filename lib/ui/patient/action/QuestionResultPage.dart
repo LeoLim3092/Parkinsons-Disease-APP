@@ -4,6 +4,7 @@ import 'package:flutter/widgets.dart';
 import 'package:pd_app/model/Patient.dart';
 import 'package:pd_app/ui/patient/action/QuestionPage.dart';
 import 'package:pd_app/ui/patient/action/VideoPageNew.dart';
+import 'package:pd_app/ui/patient/action/newResultPage.dart';
 
 
 class QuestionResultPage extends StatefulWidget {
@@ -85,7 +86,7 @@ class _QuestionResultPageState extends State<QuestionResultPage> {
                     Navigator.popUntil(context, (route) {
                       return count++ == 3;
                     });
-                    gotoVideoPage(widget.patient);
+                    gotoResultPage(widget.patient);
                   },
                   child: Container(
                       padding: const EdgeInsets.only(top: 10.0, bottom: 10.0),
@@ -101,6 +102,11 @@ class _QuestionResultPageState extends State<QuestionResultPage> {
   void gotoVideoPage(Patient patient) async {
     Navigator.of(context).push(MaterialPageRoute(
         builder: (context) => VideoPage(patient: patient)));
+  }
+
+  void gotoResultPage(Patient patient) async {
+    Navigator.of(context).push(MaterialPageRoute(
+        builder: (context) => NewResultPage(patient: patient)));
   }
 }
 

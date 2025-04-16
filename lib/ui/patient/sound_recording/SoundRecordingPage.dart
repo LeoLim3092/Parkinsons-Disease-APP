@@ -9,6 +9,7 @@ import 'package:flutter_sound/flutter_sound.dart';
 import 'package:keep_screen_on/keep_screen_on.dart';
 import 'package:path_provider/path_provider.dart';
 
+import 'package:pd_app/api/PredictService.dart';
 import 'package:pd_app/api/UploadService.dart';
 import 'package:pd_app/model/Patient.dart';
 import 'package:pd_app/prefs/UploadStatus.dart';
@@ -211,7 +212,7 @@ class _SoundRecordingPageState extends State<SoundRecordingPage> {
         ),
         onSuccessNavigation: () => gotoSoundRecordingFreeTalkPage(widget.patient),
         dialogTitle: "上傳",
-        dialogContent: "請問您是否要上傳此次錄音？",
+        dialogContent: "請問您是否要上傳此次閱讀錄音？",
         cancelText: "取消",
         uploadText: "上傳",
       );
@@ -226,7 +227,12 @@ class _SoundRecordingPageState extends State<SoundRecordingPage> {
     }
   }
 
+  Future<void> performPredictions(Patient patient, BuildContext context) async {
+    PredictService.predictModels(patient.patientId ?? "");
+  }
+
   void gotoSoundRecordingFreeTalkPage(Patient patient) {
-    Navigator.of(context).push(MaterialPageRoute(builder: (context) => SoundRecordingFreeTalkPage(patient: patient)));
+    // performPredictions(patient, context);
+    Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => SoundRecordingFreeTalkPage(patient: patient)));
   }
 }

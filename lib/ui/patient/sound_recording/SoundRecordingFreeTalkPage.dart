@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'dart:io';
+
+import 'package:camera/camera.dart';
 import 'package:provider/provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter/material.dart';
@@ -12,7 +14,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:pd_app/api/UploadService.dart';
 import 'package:pd_app/model/Patient.dart';
 import 'package:pd_app/prefs/UploadStatus.dart';
-import 'package:pd_app/ui/patient/sound_recording/SoundRecordingFreeTalkPage.dart';
+import 'package:pd_app/ui/patient/paint/PaintThreePage.dart';
 
 import 'package:pd_app/utils/UploadUtil.dart';
 import 'package:pd_app/utils/TimeUtil.dart';
@@ -192,9 +194,9 @@ class _SoundRecordingFreeTalkPageState extends State<SoundRecordingFreeTalkPage>
           widget.patient.patientId ?? "",
           filePath,
         ),
-        onSuccessNavigation: () => gotoWalkPage(widget.patient),
+        onSuccessNavigation: () => gotoPaintThreePage(widget.patient),
         dialogTitle: "上傳",
-        dialogContent: "請問您是否要上傳此次錄音？",
+        dialogContent: "請問您是否要上傳此次聊天錄音？",
         cancelText: "取消",
         uploadText: "上傳",
       );
@@ -208,15 +210,9 @@ class _SoundRecordingFreeTalkPageState extends State<SoundRecordingFreeTalkPage>
       record();
     }
   }
-  void gotoWalkPage(Patient patient) {
-    EasyLoading.show(status: 'start camera');
-    availableCameras().then((cameras) {
-      EasyLoading.dismiss();
-      Navigator.of(context).push(MaterialPageRoute(
-          builder: (context) => WalkRecordingPage(
-                cameras: cameras,
-                patient: patient,
-              )));
-    });
+
+  void  gotoPaintThreePage(Patient patient) async {
+    Navigator.of(context).pushReplacement(MaterialPageRoute(
+        builder: (context) => PaintThreePage(patient: patient)));
   }
 }

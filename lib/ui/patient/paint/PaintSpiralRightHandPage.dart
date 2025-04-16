@@ -105,7 +105,7 @@ class _PaintSpiralRightHandPageState extends State<PaintSpiralRightHandPage> {
                   });
                 },
                 style: ElevatedButton.styleFrom(
-                  primary: Colors.red, // Red color for '清空'
+                  backgroundColor: Colors.red, // Red color for '清空'
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                   textStyle: const TextStyle(fontSize: 28),
                 ),
@@ -122,7 +122,7 @@ class _PaintSpiralRightHandPageState extends State<PaintSpiralRightHandPage> {
                       }));
                 },
                 style: ElevatedButton.styleFrom(
-                  primary: Colors.green, // Green color for '儲存圖片'
+                  backgroundColor: Colors.green, // Green color for '儲存圖片'
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                   textStyle: const TextStyle(fontSize: 28),
                 ),
@@ -142,8 +142,7 @@ class _PaintSpiralRightHandPageState extends State<PaintSpiralRightHandPage> {
         builder: (context) {
           return AlertDialog(
               title: const Text("上傳", style: TextStyle(fontSize: 28)),
-              content: const Text("請問您是否要上傳圖片",
-                  style: TextStyle(fontSize: 28)),
+              content: const Text("請問您是否要上傳圖片", style: TextStyle(fontSize: 28)),
               actions: <Widget>[
                 TextButton(
                   child: const Text("取消", style: TextStyle(fontSize: 28)),
@@ -153,30 +152,61 @@ class _PaintSpiralRightHandPageState extends State<PaintSpiralRightHandPage> {
                   child: const Text("上傳", style: TextStyle(fontSize: 28)),
                   onPressed: () async {
                     EasyLoading.show(status: '上傳中');
-
-                    // print('ptName:' + widget.patient.name.toString());
-                    final tempDir = await getTemporaryDirectory();
-                    File file =
-                        await File('${tempDir.path}/image.png').create();
-                    file.writeAsBytesSync(_savedImage);
-
-                    // await UploadService.uploadPaint(widget.patient.name ?? "", File.fromRawPath(_savedImage), "circle");
-
-                    // Convert coordinates to JSON
-                    List<List<Map<String, dynamic>>> coordinatesJson = _controller.getCoordinatesList();
-
-                    // Upload image and coordinates
-                    await UploadService.uploadPaint(
-                      widget.patient.patientId ?? "",
-                      file,
-                      "spiral_right",
-                      coordinatesJson,
-                    );
-                    EasyLoading.dismiss();
-                    Navigator.of(context).pop(true);
-                    Navigator.of(context).pushReplacement(MaterialPageRoute(builder:
-                        (context) =>
-                            PaintSpiralLeftHandPage(patient: widget.patient)));
+  
+                    try {
+                      // Save the image to a temporary file
+                      final tempDir = await getTemporaryDirectory();
+                      File file = await File('${tempDir.path}/image.png').create();
+                      file.writeAsBytesSync(_savedImage);
+  
+                      // Convert coordinates to JSON
+                      List<List<Map<String, dynamic>>> coordinatesJson = _controller.getCoordinatesList();
+  
+                      // Upload image and coordinates
+                      var response = await UploadService.uploadPaint(
+                        widget.patient.patientId ?? "",
+                        file,
+                        "spiral_right",
+                        coordinatesJson,
+                      );
+  
+                      EasyLoading.dismiss();
+  
+                      if (response.statusCode == 200) {
+                        // Upload successful
+                        Navigator.of(context).pop(true);
+                        showDialog(
+                          context: context,
+                          barrierDismissible: false,
+                          builder: (context) {
+                            return AlertDialog(
+                              title: const Text("上傳成功", style: TextStyle(fontSize: 28)),
+                              content: const Text("進行下一個檢測？", style: TextStyle(fontSize: 28)),
+                              actions: <Widget>[
+                                TextButton(
+                                  child: const Text("Yes", style: TextStyle(fontSize: 28)),
+                                  onPressed: () {
+                                    Navigator.of(context).pop(); // Close success dialog
+                                    Navigator.of(context).pushReplacement(MaterialPageRoute(
+                                        builder: (context) => PaintSpiralLeftHandPage(patient: widget.patient)));
+                                  },
+                                ),
+                              ],
+                            );
+                          },
+                        );
+                      } else {
+                        // Upload failed
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("上傳失敗，請重試")),
+                        );
+                      }
+                    } catch (e) {
+                      EasyLoading.dismiss();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text("上傳過程中發生錯誤: $e")),
+                      );
+                    }
                   },
                 ),
               ]);
@@ -187,7 +217,7 @@ class _PaintSpiralRightHandPageState extends State<PaintSpiralRightHandPage> {
 class HandwrittenSignatureController {
   Function? _reset;
   Future<Uint8List?> Function()? _saveImage;
-  List<List<Offset>> Function()? _getCoordinatesList;
+  List<List<Map<String, dynamic>>> Function()? _getCoordinatesList;
 
   void reset() {
     _reset?.call();
@@ -197,7 +227,7 @@ class HandwrittenSignatureController {
     return _saveImage?.call() ?? Future.value(null);
   }
 
-  List<List<Offset>> getCoordinatesList() {
+  List<List<Map<String, dynamic>>> getCoordinatesList() {
     return _getCoordinatesList?.call() ?? [];
   }
 }

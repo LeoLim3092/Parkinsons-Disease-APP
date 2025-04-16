@@ -39,7 +39,32 @@ void showUploadDialog({
               if (response.statusCode == 200) {
                 uploadStatus.setUploadLHStatus(true); // Update status if needed
                 Navigator.of(context).pop(); // Close the dialog
-                onSuccessNavigation(); // Navigate to the desired page
+                // Show success dialog
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (context) {
+                    return AlertDialog(
+                      title: const Text("上傳成功", style: TextStyle(fontSize: 28)),
+                      content: const Text("進行下一個檢測？", style: TextStyle(fontSize: 28)),
+                      actions: <Widget>[
+                        TextButton(
+                          child: const Text("Yes", style: TextStyle(fontSize: 28)),
+                          onPressed: () {
+                            Navigator.of(context).pop(); // Close the success dialog
+                            onSuccessNavigation(); // Navigate to the next page
+                          },
+                        ),
+                        TextButton(
+                          child: const Text("No", style: TextStyle(fontSize: 20)),
+                          onPressed: () {
+                            Navigator.of(context).pop(); // Close the success dialog
+                          },
+                        ),
+                      ],
+                    );
+                  },
+                );
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text("上傳失敗，請重試")),

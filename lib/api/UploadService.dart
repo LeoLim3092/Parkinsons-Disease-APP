@@ -81,7 +81,7 @@ class UploadService {
     return request.send();
   }
 
-  static Future<http.StreamedResponse> uploadPaint(String pid, File value, String type, List<List<Map<String, double>>> coordinates) async {
+  static Future<http.StreamedResponse> uploadPaint(String pid, File value, String type, List<List<Map<String, dynamic>>> coordinates) async {
     var url = Uri.http(Constants.BASE_HOST, "api/upload_paint");
     var request = http.MultipartRequest("POST", url);
     var session = await SessionPrefs.getSession();

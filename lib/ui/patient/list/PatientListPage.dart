@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pd_app/model/Patient.dart';
-import 'package:pd_app/ui/patient/action/PatientActionPage.dart';
+
 import 'package:pd_app/ui/patient/list/PatientListViewModel.dart';
+import 'package:pd_app/ui/patient/list/StartPageForMedical.dart';
 import 'package:pd_app/ui/patient/list/CreateNewPatientPage.dart';
 import 'package:pd_app/ui/login/LoginPage.dart';
 
@@ -117,7 +118,7 @@ class _PatientListPageState extends State<PatientListPage> {
       height: 80.0,
       child: ElevatedButton(
         onPressed: () {
-          gotoPatientActionPage(patient);
+          gotoStartPageForMedical(patient);
         },
         child: Container(
           padding: const EdgeInsets.only(top: 5.0, bottom: 5.0),
@@ -130,8 +131,8 @@ class _PatientListPageState extends State<PatientListPage> {
     );
   }
 
-  void gotoPatientActionPage(Patient patient) {
-    Navigator.of(context).push(MaterialPageRoute(builder: (context) => PatientActionPage(patient: patient)));
+  void gotoStartPageForMedical(Patient patient) {
+    Navigator.of(context).push(MaterialPageRoute(builder: (context) => StartPageForMedical(patient: patient)));
   }
 
   void gotoCreatePage() {
