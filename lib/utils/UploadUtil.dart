@@ -49,16 +49,16 @@ void showUploadDialog({
                       content: const Text("進行下一個檢測？", style: TextStyle(fontSize: 28)),
                       actions: <Widget>[
                         TextButton(
+                          child: const Text("No", style: TextStyle(fontSize: 20)),
+                          onPressed: () {
+                            Navigator.of(context).pop(); // Close the success dialog
+                          },
+                        ),
+                        TextButton(
                           child: const Text("Yes", style: TextStyle(fontSize: 28)),
                           onPressed: () {
                             Navigator.of(context).pop(); // Close the success dialog
                             onSuccessNavigation(); // Navigate to the next page
-                          },
-                        ),
-                        TextButton(
-                          child: const Text("No", style: TextStyle(fontSize: 20)),
-                          onPressed: () {
-                            Navigator.of(context).pop(); // Close the success dialog
                           },
                         ),
                       ],

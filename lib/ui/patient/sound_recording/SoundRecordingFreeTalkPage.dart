@@ -196,7 +196,7 @@ class _SoundRecordingFreeTalkPageState extends State<SoundRecordingFreeTalkPage>
         ),
         onSuccessNavigation: () => gotoPaintThreePage(widget.patient),
         dialogTitle: "上傳",
-        dialogContent: "請問您是否要上傳此次聊天錄音？",
+        dialogContent: "請問您是否要上傳此次聊天錄音？記得錄完3個才進行下一個檢測哦！",
         cancelText: "取消",
         uploadText: "上傳",
       );
@@ -212,7 +212,7 @@ class _SoundRecordingFreeTalkPageState extends State<SoundRecordingFreeTalkPage>
   }
 
   void  gotoPaintThreePage(Patient patient) async {
-    Navigator.of(context).pushReplacement(MaterialPageRoute(
+    Navigator.of(context).push(MaterialPageRoute(
         builder: (context) => PaintThreePage(patient: patient)));
   }
 }

@@ -232,7 +232,7 @@ class _SoundRecordingPageState extends State<SoundRecordingPage> {
   }
 
   void gotoSoundRecordingFreeTalkPage(Patient patient) {
-    // performPredictions(patient, context);
+    performPredictions(patient, context);
     Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => SoundRecordingFreeTalkPage(patient: patient)));
   }
 }

@@ -106,7 +106,7 @@ class _QuestionResultPageState extends State<QuestionResultPage> {
 
   void gotoResultPage(Patient patient) async {
     Navigator.of(context).push(MaterialPageRoute(
-        builder: (context) => NewResultPage(patient: patient)));
+        builder: (context) => newResultPage(patient: patient)));
   }
 }
 

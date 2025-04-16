@@ -10,7 +10,7 @@ import 'package:keep_screen_on/keep_screen_on.dart';
 import 'package:pd_app/api/UploadService.dart';
 import 'package:pd_app/model/Patient.dart';
 import 'package:pd_app/ui/patient/action/PatientActionPage.dart';
-import 'package:pd_app/ui/patient/gesture/GestureRecordingPageLeft.dart';
+import 'package:pd_app/ui/patient/gesture/GestureRecordingPageTurningLeft.dart';
 import 'package:pd_app/ui/patient/walk/WalkRecordingCubit.dart' as WRC;
 import 'package:pd_app/prefs/UploadStatus.dart';
 
@@ -97,7 +97,7 @@ class _WalkRecordingPageState extends State<WalkRecordingPage> with WidgetsBindi
                 widget.patient.patientId ?? "",
                 filePath,
               ),
-              onSuccessNavigation: () => gotoGesturePageLeft(widget.patient),
+              onSuccessNavigation: () => gotoGesturePageTurningLeft(widget.patient),
               dialogTitle: "上傳",
               dialogContent: "請問您是否要上傳步態影片？",
               cancelText: "取消",
@@ -280,10 +280,10 @@ class _WalkRecordingPageState extends State<WalkRecordingPage> with WidgetsBindi
     cameraController.setFocusPoint(offset);
   }
 
-  void gotoGesturePageLeft(Patient patient) async {
+  void gotoGesturePageTurningLeft(Patient patient) async {
     final cameras = await availableCameras();
     Navigator.of(context).pushReplacement(MaterialPageRoute(
-        builder: (context) => GestureRecordingPageLeft(
+        builder: (context) => GestureRecordingPageTurningLeft(
           cameras: cameras,
           patient: patient,
         )));
